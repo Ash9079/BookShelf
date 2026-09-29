@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ── HERO ─────────────────────────────────── */
+.hero {
+  background: var(--dark);
+  padding: 4.5rem 1.5rem 4rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -10%; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 420px;
+  background: radial-gradient(ellipse, rgba(200,134,10,.1) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: .45rem;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--r5); padding: .3rem .9rem;
+  font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: rgba(255,255,255,.5);
+  margin-bottom: 1.5rem;
+}
+.hero-badge-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold); flex-shrink: 0;
+  animation: bdot 2s ease-in-out infinite;
+}
+@keyframes bdot { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero-h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 400; line-height: 1.1;
+  color: #fff; margin-bottom: 1rem;
+}
+.hero-h1 em { color: var(--gold); font-style: italic; }
+.hero-sub {
+  font-size: 1rem; color: rgba(255,255,255,.42);
+  max-width: 440px; margin: 0 auto 2.25rem; line-height: 1.75;
+}
+.hero-search {
+  display: flex; max-width: 480px; margin: 0 auto 2rem;
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.13);
+  border-radius: var(--r5); overflow: hidden;
+  transition: all var(--t);
+}
+.hero-search:focus-within {
+  background: rgba(255,255,255,.11);
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 0 0 4px rgba(200,134,10,.1);
+}
+.hero-search input {
+  flex: 1; padding: .75rem 1.35rem;
+  border: none; outline: none; background: transparent;
+  color: #fff; font-family: var(--sans); font-size: .9rem;
+}
+.hero-search input::placeholder { color: rgba(255,255,255,.28); }
+.hero-search button {
+  padding: .75rem 1.25rem; background: var(--gold); color: #fff;
+  border: none; cursor: pointer; font-size: .85rem;
+  font-weight: 600; font-family: var(--sans);
+  display: flex; align-items: center; gap: .35rem;
+  transition: background var(--t); white-space: nowrap;
+}
+.hero-search button:hover { background: #A86B06; }
+.hero-ctas {
+  display: flex; gap: .65rem; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 3rem;
+}
+.hcta-primary {
+  padding: .65rem 1.75rem; background: #fff; color: var(--dark);
+  border-radius: var(--r5); font-weight: 700; font-size: .88rem;
+  display: inline-flex; align-items: center; gap: .45rem;
+  border: none; cursor: pointer; font-family: var(--sans);
+  transition: all var(--t);
+}
+.hcta-primary:hover { background: var(--bg); transform: translateY(-2px); color: var(--dark); }
+.hcta-ghost {
+  padding: .65rem 1.75rem;
+  background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.7); border-radius: var(--r5); font-weight: 600;
+  font-size: .88rem; display: inline-flex; align-items: center; gap: .45rem;
+  cursor: pointer; font-family: var(--sans); transition: all var(--t);
+}
+.hcta-ghost:hover { background: rgba(255,255,255,.13); color: #fff; }
+.hero-stats {
+  display: flex; justify-content: center; gap: 2.5rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 2.25rem; flex-wrap: wrap;
+}
+.h-stat { text-align: center; }
+.h-stat-n { font-family: var(--serif); font-size: 1.75rem; font-weight: 400; color: #fff; line-height: 1; }
+.h-stat-l { font-size: .65rem; color: rgba(255,255,255,.3); margin-top: .2rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+
+/* ── COVER STRIP ──────────────────────────── */
+.cover-strip {
+  background: var(--dark-2);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  overflow: hidden; position: relative;
+}
+.cover-strip-inner {
+  display: flex; gap: 2px;
+  animation: cstrip 8s linear infinite; width: max-content;
+}
+.cover-strip-inner:hover { animation-play-state: paused; }
+@keyframes cstrip { from{transform:translateX(0)} to{transform:translateX(-33.33%)} }
+.strip-book { width: 80px; height: 116px; flex-shrink: 0; overflow: hidden; opacity: .55; transition: opacity .2s; }
+.strip-book:hover { opacity: .9; }
+.strip-book img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover-strip::before,.cover-strip::after { content: ''; position: absolute; top: 0; bottom: 0; width: 100px; z-index: 2; pointer-events: none; }
+.cover-strip::before { left:0; background:linear-gradient(to right,var(--dark-2),transparent); }
+.cover-strip::after  { right:0; background:linear-gradient(to left,var(--dark-2),transparent); }
+
+/* ── MOOD BAR ─────────────────────────────── */
+.mood-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.1rem 1.5rem; }
+.mood-bar-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.mood-bar-label { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); flex-shrink: 0; white-space: nowrap; }
+.mood-pills { display: flex; gap: .45rem; flex-wrap: wrap; }
+.mood-pill {
+  display: inline-flex; align-items: center; gap: .38rem;
+  padding: .35rem .85rem; border: 1.5px solid var(--border);
+  border-radius: var(--r5); font-size: .78rem; font-weight: 500;
+  color: var(--text-2); cursor: pointer; background: transparent;
+  transition: all var(--t); text-decoration: none;
+}
+.mood-pill span { font-size: .9rem; line-height: 1; }
+.mood-pill:hover { border-color: var(--red); color: var(--red); background: var(--red-light); transform: translateY(-1px); }
+
+/* ════════════════════════════════════════════
+   EDITOR'S CHOICE
+   Left: 1 tall hero  |  Right: 2×2 grid
+════════════════════════════════════════════ */
+.editors-section { padding: 2.75rem 0 2.5rem; }
+
+.editors-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .85rem;
+}
+@media(max-width:860px) {
+  .editors-layout { grid-template-columns: 1fr; }
+  .editors-sub { grid-template-columns: 1fr 1fr !important; }
+}
+@media(max-width:520px) {
+  .editors-sub { grid-template-columns: 1fr !important; }
+}
+
+/* ── Hero card (tall, spans 2 rows) */
+.editors-hero {
+  border-radius: var(--r4); overflow: hidden;
+  position: relative; cursor: pointer;
+  min-height: 380px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.1);
+}
+.editors-hero-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s var(--ease);
+}
+.editors-hero:hover .editors-hero-img { transform: scale(1.04); }
+.editors-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, transparent 25%, rgba(13,11,9,.9) 72%);
+}
+.editors-hero-body {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+.editors-hero-label {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .62rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: .5rem;
+}
+.editors-hero-title {
+  font-family: var(--serif);
+  font-size: clamp(1.25rem, 2.5vw, 1.85rem);
+  font-weight: 400; color: #fff; line-height: 1.2; margin-bottom: .3rem;
+}
+.editors-hero-author {
+  font-size: .78rem; color: rgba(255,255,255,.45);
+  font-style: italic; margin-bottom: 1rem;
+}
+.editors-hero-meta { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.editors-hero-rating {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .72rem; font-weight: 700; color: var(--gold);
+  background: rgba(255,255,255,.1); padding: .22rem .6rem; border-radius: var(--r5);
+}
+.editors-hero-btn {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .38rem 1rem; background: rgba(255,255,255,.13);
+  border: 1px solid rgba(255,255,255,.22); color: #fff;
+  border-radius: var(--r5); font-size: .74rem; font-weight: 600;
+  transition: all var(--t); backdrop-filter: blur(6px); font-family: var(--sans);
+}
+.editors-hero-btn:hover { background: #fff; color: var(--dark); }
+
+/* ── 2×2 sub-grid */
+.editors-sub {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: .85rem;
+}
+.ec-card {
+  background: var(--surface); border-radius: var(--r3);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.05);
+  cursor: pointer;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+  display: flex; flex-direction: column;
+}
+.ec-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.1), 0 10px 28px rgba(0,0,0,.1);
+}
+.ec-cover { width: 100%; aspect-ratio: 3/2; overflow: hidden; position: relative; flex-shrink: 0; }
+.ec-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s var(--ease); display: block; }
+.ec-card:hover .ec-cover img { transform: scale(1.05); }
+.ec-badge {
+  position: absolute; top: .5rem; left: .5rem;
+  background: rgba(255,255,255,.95); border-radius: var(--r5);
+  padding: .14rem .45rem; font-size: .64rem; font-weight: 700;
+  color: var(--gold); display: flex; align-items: center; gap: .2rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.ec-body { padding: .65rem .75rem .7rem; flex: 1; display: flex; flex-direction: column; }
+.ec-genre { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--red); margin-bottom: .18rem; }
+.ec-title {
+  font-family: var(--serif); font-size: .84rem; font-weight: 400;
+  color: var(--ink); line-height: 1.3; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: .1rem;
+}
+.ec-author { font-size: .67rem; color: var(--text-3); }
+
+/* ════════════════════════════════════════════
+   SCROLL ROWS — Top Rated & New Arrivals
+   All cards uniform: 130px wide, 182px cover
+════════════════════════════════════════════ */
+.scroll-section { padding: 2.25rem 0; }
+.scroll-section.on-surface {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.book-row {
+  display: flex;
+  gap: .85rem;
+  overflow-x: auto;
+  padding: .1rem 2px .85rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.book-row::-webkit-scrollbar { height: 4px; }
+.book-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Book tile */
+.bk {
+  flex: 0 0 130px;
+  width: 130px;
+  background: var(--surface);
+  border-radius: var(--r3);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.05);
+  cursor: pointer;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.bk:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.1), 0 10px 28px rgba(0,0,0,.11);
+}
+.bk-cover {
+  position: relative;
+  width: 130px;
+  height: 182px;
+  overflow: hidden;
+}
+.bk-cover img {
+  width: 130px; height: 182px;
+  object-fit: cover; display: block;
+  transition: transform .35s var(--ease);
+}
+.bk:hover .bk-cover img { transform: scale(1.04); }
+.bk-badge {
+  position: absolute; bottom: .4rem; left: .4rem;
+  background: rgba(255,255,255,.95); border-radius: var(--r5);
+  padding: .13rem .42rem; font-size: .64rem; font-weight: 700;
+  color: var(--gold); display: flex; align-items: center; gap: .15rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.14);
+}
+.bk-badge i { font-size: .58rem; }
+.bk-info { padding: .55rem .6rem .55rem; }
+.bk-title {
+  font-family: var(--serif); font-size: .78rem; font-weight: 400;
+  color: var(--ink); line-height: 1.3; margin-bottom: .1rem;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 2.08em;
+}
+.bk-author {
+  font-size: .65rem; color: var(--text-3); margin-bottom: .4rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bk-actions { display: flex; gap: .25rem; }
+.bk-btn {
+  flex: 1; padding: .26rem; border: 1px solid var(--border);
+  border-radius: var(--r1); background: transparent;
+  color: var(--text-3); font-size: .68rem; cursor: pointer;
+  transition: all var(--t); display: flex;
+  align-items: center; justify-content: center;
+  font-family: var(--sans);
+}
+.bk-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+.bk-btn.wishlisted { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+/* ── GENRE SECTION ───────────────────────── */
+.genre-section {
+  padding: 2.75rem 0 3rem;
+  background: var(--dark); border-top: 1px solid rgba(255,255,255,.05);
+}
+.genre-title { font-family: var(--serif); font-size: 1.45rem; font-weight: 400; color: #fff; margin-bottom: 1.25rem; }
+.genre-title em { color: var(--gold); font-style: italic; }
+.genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px,1fr)); gap: .5rem; }
+.genre-tile {
+  padding: .65rem .9rem; border-radius: var(--r2);
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.55); font-size: .8rem; font-weight: 500;
+  text-align: center; cursor: pointer; transition: all var(--t);
+  text-decoration: none; display: block;
+}
+.genre-tile:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.18); transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-badge"><span class="hero-badge-dot"></span> AI-Powered Book Discovery</p>
+  <h1 class="hero-h1">Find books you'll<br><em>actually love.</em></h1>
+  <p class="hero-sub">Rate what you've read. We learn your taste and surface perfect picks from thousands of titles.</p>
+  <div class="hero-search">
+    <input type="text" id="heroSearch" placeholder="Search by title, author, or genre…" onkeydown="if(event.key==='Enter')heroGo()">
+    <button onclick="heroGo()"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+  </div>
+  <div class="hero-ctas">
+    {% if not current_user.is_authenticated %}
+    <a href="{{ url_for('auth.register') }}" class="hcta-primary"><i class="fa-solid fa-rocket"></i> Get Started Free</a>
+    <a href="{{ url_for('books.browse') }}"  class="hcta-ghost"><i class="fa-solid fa-compass"></i> Browse Library</a>
+    {% else %}
+    <a href="{{ url_for('recs.index') }}"   class="hcta-primary"><i class="fa-solid fa-wand-sparkles"></i> My Recommendations</a>
+    <a href="{{ url_for('books.browse') }}" class="hcta-ghost"><i class="fa-solid fa-compass"></i> Browse Library</a>
+    {% endif %}
+  </div>
+  <div class="hero-stats">
+    <div class="h-stat"><div class="h-stat-n">{{ genres|length }}+</div><div class="h-stat-l">Genres</div></div>
+    <div class="h-stat"><div class="h-stat-n">3</div><div class="h-stat-l">ML Engines</div></div>
+    <div class="h-stat"><div class="h-stat-n">Free</div><div class="h-stat-l">Always</div></div>
+  </div>
+</section>
+
+<!-- COVER STRIP -->
+{% if featured %}
+<div class="cover-strip">
+  <div class="cover-strip-inner">
+    {% for book in featured %}<div class="strip-book"><img src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" onerror="this.src='/static/img/no-cover.svg'"></div>{% endfor %}
+    {% for book in featured %}<div class="strip-book"><img src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" onerror="this.src='/static/img/no-cover.svg'"></div>{% endfor %}
+    {% for book in featured %}<div class="strip-book"><img src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" onerror="this.src='/static/img/no-cover.svg'"></div>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- MOOD BAR -->
+<div class="mood-bar">
+  <div class="mood-bar-inner">
+    <span class="mood-bar-label">Mood</span>
+    <div class="mood-pills">
+      <a href="{{ url_for('books.browse') }}?q=thriller"  class="mood-pill"><span>🔥</span> Thrilling</a>
+      <a href="{{ url_for('books.browse') }}?q=romance"   class="mood-pill"><span>💕</span> Romantic</a>
+      <a href="{{ url_for('books.browse') }}?q=fantasy"   class="mood-pill"><span>🗡️</span> Epic Fantasy</a>
+      <a href="{{ url_for('books.browse') }}?q=mystery"   class="mood-pill"><span>🔍</span> Mystery</a>
+      <a href="{{ url_for('books.browse') }}?q=science"   class="mood-pill"><span>🌌</span> Sci-Fi</a>
+      <a href="{{ url_for('books.browse') }}?q=biography" class="mood-pill"><span>🧠</span> Non-Fiction</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EDITOR'S CHOICE ═══════════════════════════════════ -->
+{% if featured|length >= 5 %}
+<section class="editors-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Editor's <span class="accent">Choice</span></h2>
+      <a href="{{ url_for('books.browse') }}?sort=popular" class="section-link">View all <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+    </div>
+    <div class="editors-layout">
+
+      <!-- Big hero card -->
+      <div class="editors-hero" onclick="location.href='{{ url_for('books.detail', book_id=featured[0].id) }}'">
+        <img class="editors-hero-img"
+          src="{{ featured[0].cover() or '/static/img/no-cover.svg' }}"
+          alt="{{ featured[0].title }}"
+          onerror="this.src='/static/img/no-cover.svg'">
+        <div class="editors-hero-overlay"></div>
+        <div class="editors-hero-body">
+          <div class="editors-hero-label">
+            <i class="fa-solid fa-crown fa-xs"></i> Editor's Pick
+          </div>
+          <div class="editors-hero-title">{{ featured[0].title }}</div>
+          <div class="editors-hero-author">by {{ featured[0].author or 'Unknown' }}</div>
+          <div class="editors-hero-meta">
+            <span class="editors-hero-rating">
+              <i class="fa-solid fa-star fa-xs"></i> {{ '%.1f'|format(featured[0].average_rating) }}
+            </span>
+            <a href="{{ url_for('books.detail', book_id=featured[0].id) }}"
+               class="editors-hero-btn"
+               onclick="event.stopPropagation()">
+              View Book <i class="fa-solid fa-arrow-right fa-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2×2 sub-grid -->
+      <div class="editors-sub">
+        {% for book in featured[1:5] %}
+        <div class="ec-card" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+          <div class="ec-cover">
+            <img src="{{ book.cover() or '/static/img/no-cover.svg' }}"
+                 alt="{{ book.title }}"
+                 onerror="this.src='/static/img/no-cover.svg'">
+            <div class="ec-badge"><i class="fa-solid fa-star fa-xs"></i> {{ '%.1f'|format(book.average_rating) }}</div>
+          </div>
+          <div class="ec-body">
+            {% if book.genres %}<div class="ec-genre">{{ book.genres[0].name }}</div>{% endif %}
+            <div class="ec-title">{{ book.title }}</div>
+            <div class="ec-author">{{ book.author or 'Unknown' }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══ TOP RATED ═══════════════════════════════════════════ -->
+<section class="scroll-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Top <span class="accent">Rated</span></h2>
+      <a href="{{ url_for('books.browse') }}?sort=top_rated" class="section-link">See all <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+    </div>
+    <div class="book-row">
+      {% for book in top_rated %}
+      <div class="bk" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+        <div class="bk-cover">
+          <img src="{{ book.cover() or '/static/img/no-cover.svg' }}"
+               alt="{{ book.title }}"
+               loading="lazy"
+               onerror="this.src='/static/img/no-cover.svg'">
+          <div class="bk-badge"><i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}</div>
+        </div>
+        <div class="bk-info">
+          <div class="bk-title">{{ book.title }}</div>
+          <div class="bk-author">{{ book.author or 'Unknown' }}</div>
+          <div class="bk-actions" onclick="event.stopPropagation()">
+            <button class="bk-btn wish-btn {% if book.id in user_wishlist %}wishlisted{% endif %}" data-id="{{ book.id }}">
+              <i class="fa-{% if book.id in user_wishlist %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+            </button>
+            <a href="{{ url_for('books.detail', book_id=book.id) }}" class="bk-btn">
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NEW ARRIVALS ════════════════════════════════════════ -->
+{% if newest %}
+<section class="scroll-section on-surface">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">New <span class="accent">Arrivals</span></h2>
+      <a href="{{ url_for('books.browse') }}?sort=newest" class="section-link">See all <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+    </div>
+    <div class="book-row">
+      {% for book in newest %}
+      <div class="bk" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+        <div class="bk-cover">
+          <img src="{{ book.cover() or '/static/img/no-cover.svg' }}"
+               alt="{{ book.title }}"
+               loading="lazy"
+               onerror="this.src='/static/img/no-cover.svg'">
+          <div class="bk-badge"><i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}</div>
+        </div>
+        <div class="bk-info">
+          <div class="bk-title">{{ book.title }}</div>
+          <div class="bk-author">{{ book.author or 'Unknown' }}</div>
+          <div class="bk-actions" onclick="event.stopPropagation()">
+            <button class="bk-btn wish-btn {% if book.id in user_wishlist %}wishlisted{% endif %}" data-id="{{ book.id }}">
+              <i class="fa-{% if book.id in user_wishlist %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+            </button>
+            <a href="{{ url_for('books.detail', book_id=book.id) }}" class="bk-btn">
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══ GENRE GRID ══════════════════════════════════════════ -->
+{% if genres %}
+<div class="genre-section">
+  <div class="container">
+    <div class="genre-title">Browse by <em>genre</em></div>
+    <div class="genre-grid">
+      {% for g in genres %}
+      <a href="{{ url_for('books.browse') }}?genre={{ g.id }}" class="genre-tile">{{ g.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function heroGo() {
+  const q = document.getElementById('heroSearch').value.trim();
+  if (q) window.location = '{{ url_for("books.browse") }}?q=' + encodeURIComponent(q);
+}
+document.querySelectorAll('.wish-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    {% if not current_user.is_authenticated %}
+      window.location = '{{ url_for("auth.login") }}'; return;
+    {% endif %}
+    const id = btn.dataset.id;
+    fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+      body: JSON.stringify({ book_id: parseInt(id) })
+    }).then(r => r.json()).then(d => {
+      const added = d.status === 'added';
+      btn.classList.toggle('wishlisted', added);
+      btn.querySelector('i').className = `fa-${added ? 'solid' : 'regular'} fa-bookmark`;
+    });
+  });
+});
+</script>
+{% endblock %}

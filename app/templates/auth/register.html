@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block extra_styles %}
+<style>
+.auth-page { min-height:calc(100vh - 180px); display:grid; grid-template-columns:1fr 1fr; }
+@media(max-width:768px){ .auth-page { grid-template-columns:1fr; } }
+.auth-panel { display:flex; align-items:center; justify-content:center; padding:3rem 2rem; }
+.auth-card { width:100%; max-width:440px; }
+.auth-logo { width:48px; height:48px; background:var(--navy); border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:white; margin-bottom:1.75rem; }
+.auth-title { font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--text-900); margin-bottom:.4rem; }
+.auth-sub { color:var(--text-400); font-size:.9rem; margin-bottom:2rem; }
+.auth-footer { text-align:center; margin-top:1.5rem; font-size:.875rem; color:var(--text-400); }
+.auth-footer a { color:var(--terra); font-weight:600; }
+.auth-side { background:linear-gradient(145deg, #2D6A4F 0%, #3D7A57 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; text-align:center; }
+@media(max-width:768px){ .auth-side { display:none; } }
+.auth-side-title { font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:white; margin-bottom:.75rem; line-height:1.2; }
+.auth-side-sub { color:rgba(255,255,255,.65); font-size:.9rem; line-height:1.7; max-width:280px; }
+.perk { display:flex; align-items:center; gap:.85rem; background:rgba(255,255,255,.1); border-radius:var(--radius-md); padding:.75rem 1rem; margin-top:.75rem; text-align:left; }
+.perk-icon { font-size:1.2rem; flex-shrink:0; }
+.perk-text { font-size:.85rem; color:rgba(255,255,255,.85); font-weight:500; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-logo"><i class="fa-solid fa-book-open"></i></div>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-sub">Join thousands of readers discovering their next favourite book</p>
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+          {{ form.username.label(class='form-label') }}
+          {{ form.username(class='form-input', placeholder='Choose a username') }}
+          {% for e in form.username.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          {{ form.email.label(class='form-label') }}
+          {{ form.email(class='form-input', placeholder='you@example.com') }}
+          {% for e in form.email.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          {{ form.password.label(class='form-label') }}
+          {{ form.password(class='form-input', placeholder='At least 8 characters') }}
+          {% for e in form.password.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          {{ form.password2.label(class='form-label') }}
+          {{ form.password2(class='form-input', placeholder='Repeat password') }}
+          {% for e in form.password2.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+        <button type="submit" class="btn btn-terra btn-lg" style="width:100%;justify-content:center;border-radius:var(--radius-md)">
+          <i class="fa-solid fa-rocket"></i> Create Account — It's Free
+        </button>
+      </form>
+      <div class="auth-footer">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></div>
+    </div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-side-title">Start reading<br>smarter today</div>
+    <p class="auth-side-sub">Everything you need to find and track your perfect reads.</p>
+    <div style="width:100%;max-width:300px;margin-top:1.5rem">
+      <div class="perk"><span class="perk-icon">🤖</span><div class="perk-text">AI recommendations tailored to your taste</div></div>
+      <div class="perk"><span class="perk-icon">🔖</span><div class="perk-text">Save books to your personal wishlist</div></div>
+      <div class="perk"><span class="perk-icon">⭐</span><div class="perk-text">Rate & review books you've read</div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

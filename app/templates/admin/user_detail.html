@@ -1,0 +1,113 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}User: {{ user.username }}{% endblock %}
+{% block breadcrumb %}Users / {{ user.username }}{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ user.username }}</div>
+    <div class="page-subtitle">{{ user.email }}</div>
+  </div>
+  <a href="{{ url_for('admin.users') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back to Users</a>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:1.25rem;align-items:start">
+  <!-- Sidebar -->
+  <div>
+    <div class="card card-body" style="text-align:center;margin-bottom:1rem">
+      <img src="{{ user.avatar_url or 'https://api.dicebear.com/8.x/initials/svg?seed='~user.username }}"
+           style="width:72px;height:72px;border-radius:50%;margin:0 auto .75rem;object-fit:cover;display:block">
+      <div style="font-weight:600;font-size:1rem;margin-bottom:.2rem">{{ user.username }}</div>
+      <div style="font-size:.8rem;color:var(--text-light);margin-bottom:.75rem">{{ user.email }}</div>
+      <div style="display:flex;gap:.35rem;justify-content:center;flex-wrap:wrap">
+        {% if user.is_super_admin %}<span class="badge badge-purple">Super Admin</span>
+        {% elif user.is_admin %}<span class="badge badge-blue">Admin</span>
+        {% else %}<span class="badge" style="background:#f8fafc;color:var(--text-light)">User</span>{% endif %}
+        <span class="badge {% if user.is_active %}badge-green{% else %}badge-red{% endif %}">
+          {% if user.is_active %}Active{% else %}Banned{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="card card-body" style="margin-bottom:1rem">
+      <div style="font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:.75rem">Stats</div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:.85rem;color:var(--text-mid)">Total Ratings</span>
+        <span style="font-weight:600;font-family:'JetBrains Mono',monospace">{{ stats.ratings }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:.85rem;color:var(--text-mid)">Wishlist</span>
+        <span style="font-weight:600;font-family:'JetBrains Mono',monospace">{{ stats.wishlist }}</span>
+      </div>
+      <div style="margin-top:.75rem;font-size:.75rem;color:var(--text-light)">
+        Joined {{ user.created_at.strftime('%b %d, %Y') }}
+      </div>
+      {% if user.last_login %}
+      <div style="font-size:.75rem;color:var(--text-light)">Last login {{ user.last_login.strftime('%b %d, %Y') }}</div>
+      {% endif %}
+    </div>
+
+    {% if current_user.is_super_admin and user.id != current_user.id %}
+    <div class="card card-body">
+      <div style="font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-light);margin-bottom:.75rem">Actions</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <button class="btn btn-sm {% if user.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                style="justify-content:center"
+                onclick="ajaxPost('/admin/users/{{ user.id }}/toggle-ban',{},()=>location.reload())">
+          {% if user.is_active %}<i class="fa-solid fa-ban"></i> Ban User
+          {% else %}<i class="fa-solid fa-check"></i> Unban User{% endif %}
+        </button>
+        <button class="btn btn-sm {% if user.is_admin %}btn-primary{% else %}btn-ghost{% endif %}"
+                style="justify-content:center"
+                onclick="ajaxPost('/admin/users/{{ user.id }}/toggle-admin',{},()=>location.reload())">
+          <i class="fa-solid fa-shield-halved"></i>
+          {% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
+        </button>
+        <button class="btn btn-danger btn-sm" style="justify-content:center"
+                onclick="if(confirm('Permanently delete this user and all their data?'))ajaxPost('/admin/users/{{ user.id }}/delete',{},()=>location.href='{{ url_for(\'admin.users\') }}')">
+          <i class="fa-solid fa-trash"></i> Delete User
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent ratings table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-star" style="color:var(--amber)"></i> Recent Ratings</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Book</th><th>Rating</th><th>Review</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+        {% for r in ratings %}
+        {% set book = books_map.get(r.book_id) %}
+        <tr>
+          <td style="max-width:200px">
+            {% if book %}
+            <a href="{{ url_for('books.detail', book_id=book.id) }}" target="_blank"
+               style="color:var(--blue);font-size:.875rem">
+              {{ book.title[:45] }}{% if book.title|length > 45 %}…{% endif %}
+            </a>
+            {% else %}—{% endif %}
+          </td>
+          <td><span class="badge badge-amber">{{ r.rating }}★</span></td>
+          <td style="font-size:.8rem;color:var(--text-light);max-width:220px">
+            {{ (r.review or '—')[:80] }}{% if r.review and r.review|length > 80 %}…{% endif %}
+          </td>
+          <td style="font-size:.78rem;color:var(--text-light);white-space:nowrap">
+            {{ r.created_at.strftime('%b %d, %Y') }}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not ratings %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:2rem">No ratings yet.</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

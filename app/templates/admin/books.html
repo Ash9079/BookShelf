@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Books{% endblock %}
+{% block breadcrumb %}Books{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Books ({{ pagination.total }})</span>
+    <a href="{{ url_for('admin.import_csv') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-file-import"></i> Import CSV</a>
+  </div>
+  <div class="card-body" style="padding-bottom:0">
+    <form method="GET" style="display:flex;gap:.5rem;margin-bottom:1rem">
+      <input name="q" value="{{ q }}" class="search-input" placeholder="Search by title…">
+      <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
+      {% if q %}<a href="{{ url_for('admin.books') }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Cover</th><th>Title</th><th>Author</th><th>Rating</th><th>Language</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for book in books %}
+        <tr>
+          <td><img src="{{ book.cover() or '/static/img/no-cover.svg' }}" style="width:36px;height:50px;object-fit:cover;border-radius:4px" onerror="this.src='/static/img/no-cover.svg'"></td>
+          <td style="max-width:260px">
+            <div style="font-weight:500;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ book.title }}</div>
+            <div style="font-size:.75rem;color:var(--text-3)">ISBN: {{ book.isbn or '—' }}</div>
+          </td>
+          <td style="font-size:.82rem;color:var(--text-2)">{{ book.author or '—' }}</td>
+          <td><span class="badge badge-amber">{{ '%.1f'|format(book.average_rating) }}★</span></td>
+          <td><span class="badge badge-gray">{{ book.language or '—' }}</span></td>
+          <td>
+            <div style="display:flex;gap:.3rem">
+              <a href="{{ url_for('admin.edit_book', book_id=book.id) }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i></a>
+              <button class="btn btn-danger btn-sm" onclick="delBook({{ book.id }},this)"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body" style="padding-top:.75rem">
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('admin.books', page=pagination.page-1, q=q) }}" class="page-btn">‹</a>{% else %}<span class="page-btn disabled">‹</span>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+        {% if p %}<a href="{{ url_for('admin.books', page=p, q=q) }}" class="page-btn {% if p==pagination.page %}active{% endif %}">{{ p }}</a>
+        {% else %}<span class="page-btn disabled">…</span>{% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('admin.books', page=pagination.page+1, q=q) }}" class="page-btn">›</a>{% else %}<span class="page-btn disabled">›</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function delBook(id, btn){
+  if(!confirm('Delete this book? This cannot be undone.'))return;
+  ajaxPost('/admin/books/'+id+'/delete',{},function(){btn.closest('tr').remove();});
+}
+</script>
+{% endblock %}

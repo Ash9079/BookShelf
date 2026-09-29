@@ -1,0 +1,70 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Genres{% endblock %}
+{% block breadcrumb %}Genres{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Genres</div>
+    <div class="page-subtitle">{{ genres|length }} genres in catalogue</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:1.25rem;align-items:start">
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Genre Name</th><th>Books</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+        {% for g in genres %}
+        <tr id="genre-row-{{ g.id }}">
+          <td style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text-light)">{{ g.id }}</td>
+          <td style="font-weight:500;color:var(--text-dark)">{{ g.name }}</td>
+          <td>
+            <span class="badge badge-blue">{{ g.books|length }}</span>
+          </td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteGenre({{ g.id }}, this)">
+              <i class="fa-solid fa-trash"></i> Delete
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not genres %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:2rem">No genres yet. Add one →</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-body">
+    <div class="card-title" style="margin-bottom:1rem">
+      <i class="fa-solid fa-plus" style="color:var(--blue)"></i> Add New Genre
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_genre') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Genre Name</label>
+        <input class="form-control" name="name" placeholder="e.g. Science Fiction" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+        <i class="fa-solid fa-plus"></i> Add Genre
+      </button>
+    </form>
+    <div style="margin-top:1.25rem;padding:.75rem;background:var(--blue-light);border-radius:var(--radius);font-size:.8rem;color:var(--blue)">
+      <i class="fa-solid fa-circle-info"></i> Genres are assigned to books automatically when you import a CSV that includes genre data. You can also assign them manually via the book editor.
+    </div>
+  </div>
+</div>
+
+<script>
+function deleteGenre(id, btn) {
+  if (!confirm('Delete this genre? It will be removed from all associated books.')) return;
+  ajaxPost('/admin/genres/' + id + '/delete', {}, () => {
+    document.getElementById('genre-row-' + id).remove();
+  });
+}
+</script>
+{% endblock %}

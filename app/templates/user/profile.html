@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}{{ current_user.username }}'s Profile{% endblock %}
+{% block extra_styles %}
+<style>
+.profile-hero{background:var(--bg-surface);border-bottom:1px solid var(--border);padding:2.5rem 0}
+.profile-layout{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.profile-avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--border);object-fit:cover}
+.profile-name{font-family:var(--font-display);font-size:1.6rem;font-weight:700}
+.profile-bio{color:var(--text-muted);font-size:.875rem;margin-top:.25rem}
+.profile-stats{display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap}
+.p-stat{text-align:center}
+.p-stat-num{font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--gold)}
+.p-stat-label{font-size:.75rem;color:var(--text-muted)}
+.profile-actions{margin-left:auto;display:flex;gap:.5rem}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin:1.5rem 0}
+.tab{padding:.6rem 1.25rem;border-bottom:2px solid transparent;color:var(--text-muted);font-size:.875rem;font-weight:500;cursor:pointer;transition:all var(--transition)}
+.tab:hover{color:var(--text-primary)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+.rating-row{display:flex;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--border)}
+.rating-row:last-child{border-bottom:none}
+.rating-cover{width:44px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.rating-info{flex:1;min-width:0}
+.rating-title{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rating-author{font-size:.78rem;color:var(--text-muted)}
+.rating-stars{color:var(--gold);font-size:.85rem}
+.rating-date{font-size:.75rem;color:var(--text-muted)}
+
+.wish-row{display:flex;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--border)}
+.wish-row:last-child{border-bottom:none}
+.wish-cover{width:44px;height:60px;object-fit:cover;border-radius:4px;flex-shrink:0}
+
+.chart-wrap{max-width:360px;margin:1.5rem auto}
+.dist-bar-wrap{margin-top:1.5rem}
+.dist-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.dist-label{font-size:.8rem;color:var(--text-muted);width:20px;text-align:right}
+.dist-bar-bg{flex:1;background:var(--bg-raised);border-radius:4px;height:8px;overflow:hidden}
+.dist-bar{height:100%;background:var(--gold);border-radius:4px;transition:width .6s ease}
+.dist-count{font-size:.75rem;color:var(--text-muted);width:28px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="profile-hero">
+  <div class="container">
+    <div class="profile-layout">
+      <img class="profile-avatar"
+           src="{{ current_user.avatar_url or 'https://api.dicebear.com/8.x/initials/svg?seed=' ~ current_user.username }}"
+           alt="{{ current_user.username }}">
+      <div>
+        <div class="profile-name">{{ current_user.username }}</div>
+        <div class="profile-bio">{{ current_user.bio or 'No bio yet.' }}</div>
+        <div class="profile-stats">
+          <div class="p-stat"><div class="p-stat-num">{{ ratings|length }}</div><div class="p-stat-label">Ratings</div></div>
+          <div class="p-stat"><div class="p-stat-num">{{ wishlist|length }}</div><div class="p-stat-label">Wishlist</div></div>
+          <div class="p-stat"><div class="p-stat-num">{{ history|length }}</div><div class="p-stat-label">Browsed</div></div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <a href="{{ url_for('user.edit_profile') }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <span class="tab active" onclick="showTab('ratings',this)"><i class="fa-solid fa-star"></i> Ratings</span>
+    <span class="tab" onclick="showTab('wishlist',this)"><i class="fa-regular fa-bookmark"></i> Wishlist</span>
+    <span class="tab" onclick="showTab('history',this)"><i class="fa-solid fa-clock-rotate-left"></i> History</span>
+    <span class="tab" onclick="showTab('taste',this)"><i class="fa-solid fa-chart-radar"></i> Taste</span>
+  </div>
+
+  <!-- Ratings tab -->
+  <div class="tab-content active" id="tab-ratings">
+    {% if ratings %}
+      {% for r in ratings %}
+      {% set book = books_map.get(r.book_id) %}{% if book %}
+      <div class="rating-row">
+        <img class="rating-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" onerror="this.src='/static/img/no-cover.svg'">
+        <div class="rating-info">
+          <a href="{{ url_for('books.detail', book_id=book.id) }}" style="color:var(--text-primary)">
+            <div class="rating-title">{{ book.title }}</div>
+          </a>
+          <div class="rating-author">{{ book.author or 'Unknown' }}</div>
+          <div class="rating-stars">{% for i in range(1,6) %}{% if i <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+          {% if r.review %}<div class="rating-date" style="margin-top:.2rem">{{ r.review[:80] }}{% if r.review|length > 80 %}…{% endif %}</div>{% endif %}
+        </div>
+        <div class="rating-date">{{ r.updated_at.strftime('%b %Y') }}</div>
+      </div>
+      {% endif %}{% endfor %}
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-star"></i><p>No ratings yet. Start rating books!</p><a href="{{ url_for('books.browse') }}" class="btn btn-gold">Browse Books</a></div>
+    {% endif %}
+  </div>
+
+  <!-- Wishlist tab -->
+  <div class="tab-content" id="tab-wishlist">
+    {% if wishlist %}
+      {% for w in wishlist %}
+      {% set book = wish_books.get(w.book_id) %}{% if book %}
+      <div class="wish-row">
+        <img class="wish-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" onerror="this.src='/static/img/no-cover.svg'">
+        <div class="rating-info">
+          <a href="{{ url_for('books.detail', book_id=book.id) }}" style="color:var(--text-primary)">
+            <div class="rating-title">{{ book.title }}</div>
+          </a>
+          <div class="rating-author">{{ book.author or 'Unknown' }}</div>
+          <div class="rating-date">Added {{ w.added_at.strftime('%b %Y') }}</div>
+        </div>
+        <div class="rating-stars" style="color:var(--gold)">★ {{ '%.1f'|format(book.average_rating) }}</div>
+      </div>
+      {% endif %}{% endfor %}
+    {% else %}
+    <div class="empty-state"><i class="fa-regular fa-bookmark"></i><p>Your wishlist is empty.</p><a href="{{ url_for('books.browse') }}" class="btn btn-gold">Browse Books</a></div>
+    {% endif %}
+  </div>
+
+  <!-- History tab -->
+  <div class="tab-content" id="tab-history">
+    {% if history %}
+      {% for h in history %}
+      {% set book = hist_books.get(h.book_id) %}{% if book %}
+      <div class="wish-row">
+        <img class="wish-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" onerror="this.src='/static/img/no-cover.svg'">
+        <div class="rating-info">
+          <a href="{{ url_for('books.detail', book_id=book.id) }}" style="color:var(--text-primary)">
+            <div class="rating-title">{{ book.title }}</div>
+          </a>
+          <div class="rating-author">{{ book.author or 'Unknown' }}</div>
+          <div class="rating-date">Viewed {{ h.read_count }}× · Last {{ h.read_at.strftime('%b %d, %Y') }}</div>
+        </div>
+      </div>
+      {% endif %}{% endfor %}
+    {% else %}
+    <div class="empty-state"><i class="fa-solid fa-clock-rotate-left"></i><p>No reading history yet.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Taste tab -->
+  <div class="tab-content" id="tab-taste">
+    {% if taste_labels %}
+    <div class="chart-wrap">
+      <canvas id="tasteChart" width="360" height="360"></canvas>
+    </div>
+    {% endif %}
+    <div class="dist-bar-wrap">
+      <h3 style="font-size:.9rem;color:var(--text-secondary);margin-bottom:.75rem">Rating Distribution</h3>
+      {% set total = dist.values()|sum or 1 %}
+      {% for star in [5,4,3,2,1] %}
+      <div class="dist-row">
+        <span class="dist-label">{{ star }}★</span>
+        <div class="dist-bar-bg"><div class="dist-bar" style="width:{{ (dist[star]/total*100)|round }}%"></div></div>
+        <span class="dist-count">{{ dist[star] }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+{% if taste_labels %}
+const ctx = document.getElementById('tasteChart').getContext('2d');
+new Chart(ctx,{
+  type:'radar',
+  data:{
+    labels: {{ taste_labels | tojson }},
+    datasets:[{label:'Genre Affinity',data:{{ taste_data | tojson }},
+      backgroundColor:'rgba(200,161,101,.15)',borderColor:'rgba(200,161,101,.7)',
+      pointBackgroundColor:'rgba(200,161,101,.9)',borderWidth:2}]
+  },
+  options:{responsive:true,scales:{r:{ticks:{color:'#7d7060',backdropColor:'transparent'},grid:{color:'rgba(200,161,101,.1)'},pointLabels:{color:'#c2b59a',font:{size:11}}}},plugins:{legend:{display:false}}}
+});
+{% endif %}
+</script>
+{% endblock %}

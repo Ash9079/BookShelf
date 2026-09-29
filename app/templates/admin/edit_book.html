@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Edit Book{% endblock %}
+{% block breadcrumb %}Books / Edit{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Edit Book</div>
+    <div class="page-subtitle">{{ book.title[:60] }}</div>
+  </div>
+  <a href="{{ url_for('admin.books') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 260px;gap:1.25rem;align-items:start">
+  <div class="card card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-control" name="title" value="{{ book.title }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Author</label>
+        <input class="form-control" name="author" value="{{ book.author or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Publisher</label>
+        <input class="form-control" name="publisher" value="{{ book.publisher or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="5">{{ book.description or '' }}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label">Pages</label>
+          <input class="form-control" type="number" name="page_count" value="{{ book.page_count or '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Language</label>
+          <input class="form-control" name="language" value="{{ book.language or '' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cover Image URL</label>
+        <input class="form-control" name="cover_image_url" value="{{ book.cover_image_url or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Genres</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;padding:.75rem;border:1px solid var(--border);border-radius:var(--radius);background:#fafafa;max-height:180px;overflow-y:auto">
+          {% for g in all_genres %}
+          <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;cursor:pointer">
+            <input type="checkbox" name="genres" value="{{ g.id }}"
+                   {% if g in book.genres %}checked{% endif %}
+                   style="accent-color:var(--blue)">
+            {{ g.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:.5rem">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Changes</button>
+        <a href="{{ url_for('admin.books') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div>
+    <div class="card card-body" style="text-align:center">
+      <img src="{{ book.cover() or '' }}"
+           style="width:140px;border-radius:8px;margin:0 auto 1rem;box-shadow:0 4px 12px rgba(0,0,0,.12);display:block"
+           onerror="this.style.display='none'">
+      <div style="font-size:.78rem;color:var(--text-light);margin-bottom:.3rem">ISBN: {{ book.isbn or '—' }}</div>
+      <div style="font-size:.78rem;color:var(--text-light)">Avg: {{ "%.2f"|format(book.average_rating) }} ({{ book.ratings_count }} ratings)</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

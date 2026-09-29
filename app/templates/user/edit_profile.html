@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:3rem auto;padding:0 1.5rem">
+  <div style="margin-bottom:1.5rem">
+    <a href="{{ url_for('user.profile') }}" style="color:var(--gold-dim);font-size:.875rem">← Back to profile</a>
+  </div>
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:2rem">
+    <h1 style="font-family:var(--font-display);font-size:1.5rem;margin-bottom:1.5rem">Edit Profile</h1>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        {{ form.username.label(class='form-label') }}
+        {{ form.username(class='form-input') }}
+        {% for e in form.username.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.bio.label(class='form-label') }}
+        {{ form.bio(class='form-input', placeholder='Tell us about your reading taste…') }}
+        {% for e in form.bio.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.avatar_url.label(class='form-label') }}
+        {{ form.avatar_url(class='form-input', placeholder='https://…') }}
+        {% for e in form.avatar_url.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center">
+        <i class="fa-solid fa-check"></i> Save Changes
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

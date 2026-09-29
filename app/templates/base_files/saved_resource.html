@@ -1,0 +1,340 @@
+
+<!-- saved from url=(0012)about:srcdoc -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+.page-title{font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
+.page-subtitle{font-size:.82rem;color:var(--text-2)}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.5rem}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between}
+.kpi-num{font-size:1.8rem;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
+.kpi-label{font-size:.75rem;font-weight:500;color:var(--text-2);margin-top:.2rem}
+.kpi-chip{font-size:.7rem;font-weight:600;padding:.15rem .5rem;border-radius:20px;display:inline-block}
+.chip-green{background:#dcfce7;color:#16a34a}
+.chip-blue{background:#dbeafe;color:#1d4ed8}
+.chip-red{background:#fee2e2;color:#dc2626}
+.kpi-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.kpi-foot{font-size:.72rem;color:var(--text-3)}
+.section-label{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin:.75rem 0 .5rem}
+.charts-2{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:860px){.charts-2{grid-template-columns:1fr}}
+.charts-equal{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:768px){.charts-equal{grid-template-columns:1fr}}
+.quick-actions{display:flex;flex-wrap:wrap;gap:.6rem}
+.rank-bar{height:5px;border-radius:3px;background:#e2e8f0;margin-top:.35rem;overflow:hidden}
+.rank-fill{height:100%;border-radius:3px;background:var(--blue)}
+</style>
+{% endblock %}
+
+{% block admin_content %}
+
+<!-- Header -->
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Welcome back, {{ current_user.username }} — here's what's happening</div>
+  </div>
+  <div class="quick-actions">
+    <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.books&#39;)%20%7D%7D" class="btn btn-ghost btn-sm"><i class="fa-solid fa-book"></i> Manage Books</a>
+    <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.users&#39;)%20%7D%7D" class="btn btn-ghost btn-sm"><i class="fa-solid fa-users"></i> Manage Users</a>
+    <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.import_csv&#39;)%20%7D%7D" class="btn btn-primary btn-sm"><i class="fa-solid fa-file-import"></i> Import CSV</a>
+  </div>
+</div>
+
+<!-- Library KPIs -->
+<div class="section-label">📚 Library</div>
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ book_count }}</div><div class="kpi-label">Total Books</div></div>
+      <div class="kpi-icon stat-icon-blue"><i class="fa-solid fa-book"></i></div>
+    </div>
+    <div class="kpi-foot"><a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.books&#39;)%20%7D%7D" style="color:var(--blue)">Browse library →</a></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ genre_count }}</div><div class="kpi-label">Genres</div></div>
+      <div class="kpi-icon stat-icon-purple"><i class="fa-solid fa-tags"></i></div>
+    </div>
+    <div class="kpi-foot"><a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.genres&#39;)%20%7D%7D" style="color:var(--blue)">Manage genres →</a></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ rating_count }}</div><div class="kpi-label">Total Ratings</div></div>
+      <div class="kpi-icon stat-icon-amber"><i class="fa-solid fa-star"></i></div>
+    </div>
+    <div class="kpi-foot"><span class="kpi-chip chip-blue">+{{ new_ratings_week }} this week</span></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ '%.1f'|format(avg_rating) }}</div><div class="kpi-label">Avg Rating</div></div>
+      <div class="kpi-icon stat-icon-amber"><i class="fa-solid fa-chart-line"></i></div>
+    </div>
+    <div class="kpi-foot">across all rated books</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ wishlist_count }}</div><div class="kpi-label">Wishlist Saves</div></div>
+      <div class="kpi-icon stat-icon-purple"><i class="fa-solid fa-bookmark"></i></div>
+    </div>
+    <div class="kpi-foot">books saved by users</div>
+  </div>
+</div>
+
+<!-- User KPIs -->
+<div class="section-label">👥 Users</div>
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ user_count }}</div><div class="kpi-label">Total Users</div></div>
+      <div class="kpi-icon stat-icon-green"><i class="fa-solid fa-users"></i></div>
+    </div>
+    <div class="kpi-foot"><span class="kpi-chip chip-green">+{{ new_users_week }} this week</span></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num">{{ active_count }}</div><div class="kpi-label">Active Users</div></div>
+      <div class="kpi-icon stat-icon-green"><i class="fa-solid fa-circle-check"></i></div>
+    </div>
+    <div class="kpi-foot">{% if user_count &gt; 0 %}{{ ((active_count / user_count) * 100)|round|int }}% of all users{% endif %}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-top">
+      <div><div class="kpi-num" style="color:#dc2626">{{ banned_count }}</div><div class="kpi-label">Banned Users</div></div>
+      <div class="kpi-icon stat-icon-amber"><i class="fa-solid fa-ban"></i></div>
+    </div>
+    <div class="kpi-foot">
+      {% if banned_count &gt; 0 %}<a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.users&#39;)%20%7D%7D?filter=banned" style="color:#dc2626">View banned →</a>
+      {% else %}No banned users{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts row 1 -->
+<div class="section-label">📈 Activity — Last 14 Days</div>
+<div class="charts-2">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-star" style="color:#d97706;margin-right:.4rem"></i>Ratings per Day</span>
+      <span style="font-size:.75rem;color:var(--text-3)">{{ new_ratings_week }} this week</span>
+    </div>
+    <div class="card-body"><canvas id="ratingsChart" height="160"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-users" style="color:#16a34a;margin-right:.4rem"></i>New Signups</span>
+      <span style="font-size:.75rem;color:var(--text-3)">{{ new_users_week }} this week</span>
+    </div>
+    <div class="card-body"><canvas id="userChart" height="160"></canvas></div>
+  </div>
+</div>
+
+<!-- Charts row 2 -->
+<div class="section-label">🏷️ Content Breakdown</div>
+<div class="charts-equal">
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-tags" style="color:#7c3aed;margin-right:.4rem"></i>Genre Distribution</span></div>
+    <div class="card-body"><canvas id="genreChart" height="210"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-chart-bar" style="color:#d97706;margin-right:.4rem"></i>Rating Distribution</span></div>
+    <div class="card-body">
+      <canvas id="distChart" height="155"></canvas>
+      <div style="display:flex;justify-content:space-around;margin-top:.75rem">
+        {% for i in range(1,6) %}
+        <div style="text-align:center;font-size:.75rem">
+          <div style="font-weight:700;font-family:&#39;JetBrains Mono&#39;,monospace">{{ rating_dist[i-1] }}</div>
+          <div style="color:var(--text-3)">{{'★'*i}}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Books tables -->
+<div class="section-label">📖 Book Highlights</div>
+<div class="charts-equal">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🏆 Top Rated Books</span>
+      <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.books&#39;)%20%7D%7D" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="table-wrap">
+      
+        {% for b in top_books %}
+        
+        {% else %}
+        
+        {% endfor %}
+        <table>
+        <thead><tr><th>#</th><th>Title</th><th>Avg</th><th>Count</th></tr></thead>
+        <tbody><tr>
+          <td style="font-weight:700;color:var(--text-3);font-size:.8rem">{{ loop.index }}</td>
+          <td>
+            <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;books.detail&#39;,%20book_id=b.id)%20%7D%7D" target="_blank" style="font-size:.83rem;font-weight:500;color:var(--blue)">
+              {{ b.title[:36] }}{% if b.title|length &gt; 36 %}…{% endif %}
+            </a>
+            <div style="font-size:.72rem;color:var(--text-3)">{{ b.author or '—' }}</div>
+          </td>
+          <td><span class="badge badge-amber">{{ '%.1f'|format(b.average_rating) }}★</span></td>
+          <td style="font-size:.8rem;color:var(--text-2)">{{ b.ratings_count }}</td>
+        </tr><tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:1.5rem">No rated books yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🔥 Most Reviewed</span>
+      <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.ratings&#39;)%20%7D%7D" class="btn btn-ghost btn-sm">View ratings</a>
+    </div>
+    <div class="table-wrap">
+      
+        {% set max_rev = most_reviewed[0].ratings_count if most_reviewed and most_reviewed[0].ratings_count else 1 %}
+        {% for b in most_reviewed %}
+        
+        {% else %}
+        
+        {% endfor %}
+        <table>
+        <thead><tr><th>#</th><th>Title</th><th>Reviews</th></tr></thead>
+        <tbody><tr>
+          <td style="font-weight:700;color:var(--text-3);font-size:.8rem">{{ loop.index }}</td>
+          <td>
+            <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;books.detail&#39;,%20book_id=b.id)%20%7D%7D" target="_blank" style="font-size:.83rem;font-weight:500;color:var(--blue)">
+              {{ b.title[:36] }}{% if b.title|length &gt; 36 %}…{% endif %}
+            </a>
+            <div class="rank-bar"><div class="rank-fill" style="width:{{ ([b.ratings_count,0]|max / max_rev * 100)|int }}%"></div></div>
+          </td>
+          <td style="font-size:.8rem;color:var(--text-2)">{{ b.ratings_count }}</td>
+        </tr><tr><td colspan="3" style="text-align:center;color:var(--text-3);padding:1.5rem">No reviews yet.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="section-label">🕐 Recent Activity</div>
+<div class="charts-equal">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">New Users</span>
+      <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.users&#39;)%20%7D%7D" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="table-wrap">
+      
+        {% for u in recent_users %}
+        
+        {% endfor %}
+        <table>
+        <thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody><tr>
+          <td>
+            <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.user_detail&#39;,%20user_id=u.id)%20%7D%7D" style="font-weight:600;font-size:.85rem;color:var(--blue)">{{ u.username }}</a>
+            <div style="font-size:.72rem;color:var(--text-3)">{{ u.email }}</div>
+          </td>
+          <td>
+            {% if u.is_super_admin %}<span class="badge badge-purple">Super</span>
+            {% elif u.is_admin %}<span class="badge badge-blue">Admin</span>
+            {% else %}<span class="badge badge-gray">User</span>{% endif %}
+            {% if not u.is_active %}<span class="badge badge-red" style="margin-left:.2rem">Banned</span>{% endif %}
+          </td>
+          <td style="font-size:.75rem;color:var(--text-3);white-space:nowrap">{{ u.created_at.strftime('%b %d, %Y') if u.created_at else '—' }}</td>
+        </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Recent Ratings</span>
+      <a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;admin.ratings&#39;)%20%7D%7D" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="table-wrap">
+      
+        {% for r in recent_ratings %}
+        {% set u = rating_users_map.get(r.user_id) %}
+        {% set b = rating_books_map.get(r.book_id) %}
+        
+        {% endfor %}
+        <table>
+        <thead><tr><th>User</th><th>Book</th><th>★</th><th>Date</th></tr></thead>
+        <tbody><tr>
+          <td style="font-size:.82rem;font-weight:500">{{ u.username if u else '—' }}</td>
+          <td style="font-size:.78rem;color:var(--text-2);max-width:120px">
+            {% if b %}<a href="https://www.claudeusercontent.com/%7B%7B%20url_for(&#39;books.detail&#39;,%20book_id=b.id)%20%7D%7D" target="_blank" style="color:var(--blue)">{{ b.title[:26] }}{% if b.title|length &gt; 26 %}…{% endif %}</a>{% else %}—{% endif %}
+          </td>
+          <td><span class="badge badge-amber" style="font-size:.7rem">{{ r.rating }}★</span></td>
+          <td style="font-size:.72rem;color:var(--text-3);white-space:nowrap">{{ r.created_at.strftime('%b %d') }}</td>
+        </tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Ratings over time
+new Chart(document.getElementById('ratingsChart'), {
+  type: 'line',
+  data: {
+    labels: {{ chart_labels|tojson }},
+    datasets: [{ label: 'Ratings', data: {{ chart_data|tojson }},
+      fill: true, backgroundColor: 'rgba(59,130,246,0.08)', borderColor: 'rgba(59,130,246,0.8)',
+      borderWidth: 2, pointBackgroundColor: '#3b82f6', pointRadius: 3, tension: 0.4 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.04)' } },
+              x: { ticks: { maxTicksLimit: 7, font: { size: 10 } }, grid: { display: false } } } }
+});
+
+// User signups
+new Chart(document.getElementById('userChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ user_chart_labels|tojson }},
+    datasets: [{ label: 'Signups', data: {{ user_chart_data|tojson }},
+      backgroundColor: 'rgba(22,163,74,0.7)', borderRadius: 4, borderSkipped: false }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.04)' } },
+              x: { ticks: { maxTicksLimit: 7, font: { size: 10 } }, grid: { display: false } } } }
+});
+
+// Genre donut
+new Chart(document.getElementById('genreChart'), {
+  type: 'doughnut',
+  data: {
+    labels: {{ genre_labels|tojson }},
+    datasets: [{ data: {{ genre_counts|tojson }},
+      backgroundColor: ['#3b82f6','#16a34a','#d97706','#7c3aed','#dc2626','#0891b2','#ea580c','#65a30d','#db2777','#0d9488'],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, cutout: '60%',
+    plugins: { legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } } } }
+});
+
+// Rating distribution
+new Chart(document.getElementById('distChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1★','2★','3★','4★','5★'],
+    datasets: [{ data: {{ rating_dist|tojson }},
+      backgroundColor: ['#dc2626','#ea580c','#d97706','#65a30d','#16a34a'],
+      borderRadius: 5, borderSkipped: false }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.04)' } },
+              x: { grid: { display: false } } } }
+});
+</script>
+{% endblock %}
+</body></html>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}My Wishlist{% endblock %}
+{% block content %}
+<div style="background:var(--bg-surface);border-bottom:1px solid var(--border);padding:2rem 0">
+  <div class="container">
+    <h1 style="font-family:var(--font-display);font-size:1.8rem;font-weight:700">
+      <i class="fa-regular fa-bookmark" style="color:var(--gold)"></i> My Wishlist
+    </h1>
+    <p style="color:var(--text-muted);margin-top:.35rem">{{ wishlist|length }} book{% if wishlist|length != 1 %}s{% endif %} saved</p>
+  </div>
+</div>
+<div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  {% if wishlist %}
+  <div class="books-grid">
+    {% for w in wishlist %}
+    {% set book = books.get(w.book_id) %}{% if book %}
+    <div class="book-card" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+      <div class="book-cover-wrap">
+        <img class="book-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" loading="lazy" onerror="this.src='/static/img/no-cover.svg'">
+        <div class="book-badge"><i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}</div>
+      </div>
+      <div class="book-info">
+        <div class="book-title">{{ book.title }}</div>
+        <div class="book-author">{{ book.author or 'Unknown' }}</div>
+        <div class="book-actions" onclick="event.stopPropagation()">
+          <button class="book-action-btn wish-btn wishlisted" data-id="{{ book.id }}" title="Remove from wishlist">
+            <i class="fa-solid fa-bookmark"></i> Saved
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fa-regular fa-bookmark"></i>
+    <p>Your wishlist is empty. Browse books and click "Want to Read" to save them here.</p>
+    <a href="{{ url_for('books.browse') }}" class="btn btn-gold">Browse Books</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.wish-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const id=this.dataset.id;const el=this.closest('.book-card');
+    fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify({book_id:parseInt(id)})})
+    .then(r=>r.json()).then(d=>{if(d.status==='removed')el.remove();});
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Your Recommendations{% endblock %}
+{% block extra_styles %}
+<style>
+.recs-hero{background:var(--bg-surface);border-bottom:1px solid var(--border);padding:2.5rem 0}
+.recs-hero h1{font-family:var(--font-display);font-size:2rem;font-weight:700;margin-bottom:.4rem}
+.recs-hero p{color:var(--text-secondary)}
+.algo-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .85rem;border-radius:20px;font-size:.8rem;font-weight:600;margin-top:.75rem}
+.algo-content{background:rgba(99,148,221,.15);color:#82aee3;border:1px solid rgba(99,148,221,.25)}
+.algo-collab{background:rgba(74,163,98,.12);color:#6dd98a;border:1px solid rgba(74,163,98,.25)}
+.algo-hybrid{background:var(--gold-glow);color:var(--gold);border:1px solid var(--border)}
+.recs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
+.refresh-btn{display:flex;align-items:center;gap:.45rem;padding:.45rem 1rem;border:1px solid var(--border);border-radius:var(--radius-md);background:transparent;color:var(--text-secondary);font-size:.875rem;cursor:pointer;transition:all var(--transition);font-family:var(--font-body)}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+.refresh-btn.loading i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-recs{text-align:center;padding:5rem 1rem;color:var(--text-muted)}
+.empty-recs i{font-size:4rem;margin-bottom:1.25rem;opacity:.2}
+.empty-recs h2{font-family:var(--font-display);font-size:1.4rem;margin-bottom:.5rem;color:var(--text-secondary)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recs-hero">
+  <div class="container">
+    <h1><i class="fa-solid fa-wand-sparkles" style="color:var(--gold)"></i> Your Recommendations</h1>
+    <p>Personalised picks powered by your reading history and taste.</p>
+    {% set algo_class = 'algo-hybrid' if algo == 'hybrid' else ('algo-collab' if algo == 'collaborative' else 'algo-content') %}
+    {% set algo_label = '🔀 Hybrid Algorithm' if algo == 'hybrid' else ('🤝 Collaborative Filtering' if algo == 'collaborative' else '📚 Content-Based') %}
+    <span class="algo-badge {{ algo_class }}">{{ algo_label }}</span>
+  </div>
+</div>
+
+<div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="recs-header">
+    <p style="color:var(--text-muted);font-size:.875rem">
+      {% if books %}Showing {{ books|length }} recommendations for you{% endif %}
+    </p>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshRecs()">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+  </div>
+
+  {% if books %}
+  <div class="books-grid" id="recsGrid">
+    {% for book in books %}
+    <div class="book-card" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+      <div class="book-cover-wrap">
+        <img class="book-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" loading="lazy" onerror="this.src='/static/img/no-cover.svg'">
+        <div class="book-badge"><i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}</div>
+      </div>
+      <div class="book-info">
+        <div class="book-title">{{ book.title }}</div>
+        <div class="book-author">{{ book.author or 'Unknown' }}</div>
+        <div class="book-actions" onclick="event.stopPropagation()">
+          <button class="book-action-btn wish-btn" data-id="{{ book.id }}">
+            <i class="fa-regular fa-bookmark"></i>
+          </button>
+          <a href="{{ url_for('books.detail', book_id=book.id) }}" class="book-action-btn"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-recs">
+    <i class="fa-solid fa-book-open"></i>
+    <h2>No recommendations yet</h2>
+    <p>Rate at least a few books and we'll generate personalised picks for you.</p>
+    <a href="{{ url_for('books.browse') }}" class="btn btn-gold" style="margin-top:1rem"><i class="fa-solid fa-compass"></i> Browse Books</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshRecs(){
+  const btn=document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  fetch('{{ url_for("recs.api_refresh") }}',{method:'POST',headers:{'X-CSRFToken':csrf()}})
+  .then(r=>r.json()).then(d=>{btn.classList.remove('loading');if(d.status==='ok')window.location.reload();})
+  .catch(()=>btn.classList.remove('loading'));
+}
+document.querySelectorAll('.wish-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const id=this.dataset.id;
+    fetch('/api/wishlist',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify({book_id:parseInt(id)})})
+    .then(r=>r.json()).then(d=>{const a=d.status==='added';this.classList.toggle('wishlisted',a);this.querySelector('i').className='fa-'+(a?'solid':'regular')+' fa-bookmark';});
+  });
+});
+</script>
+{% endblock %}

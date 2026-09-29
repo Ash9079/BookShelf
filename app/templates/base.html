@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}BookShelf{% endblock %} — BookShelf</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg:           #F7F3ED;
+      --bg-alt:       #EDE8DF;
+      --surface:      #FFFFFF;
+      --ink:          #1A1714;
+      --ink-mid:      #2E2A26;
+      --text:         #1A1714;
+      --text-2:       #4A453F;
+      --text-3:       #8C857C;
+      --border:       #E2D9CE;
+      --border-2:     #CFC5B8;
+      --red:          #C74B30;
+      --red-dark:     #A33B23;
+      --red-light:    #FDF1EE;
+      --gold:         #C8860A;
+      --gold-light:   #FEF5E4;
+      --teal:         #1A6B6B;
+      --teal-light:   #EAF5F5;
+      --green:        #1A7A4A;
+      --green-light:  #EDF7F2;
+      --dark:         #0D0B09;
+      --dark-2:       #18150F;
+      --dark-3:       #252019;
+      --s1: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --s2: 0 4px 16px rgba(0,0,0,.09), 0 2px 4px rgba(0,0,0,.05);
+      --s3: 0 8px 32px rgba(0,0,0,.11), 0 3px 8px rgba(0,0,0,.06);
+      --s4: 0 24px 64px rgba(0,0,0,.15), 0 8px 24px rgba(0,0,0,.08);
+      --card-ring: 0 0 0 1px rgba(0,0,0,.07);
+      --r1: 4px; --r2: 8px; --r3: 12px; --r4: 18px; --r5: 9999px;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans:  'DM Sans', system-ui, sans-serif;
+      --ease: cubic-bezier(.25,.46,.45,.94);
+      --t: .18s var(--ease);
+      /* Compat aliases */
+      --cream: #F7F3ED; --cream-alt: #EDE8DF; --parchment: #F7F3ED;
+      --parchment-alt: #EDE8DF; --white: #FFFFFF; --navy: #0D0B09;
+      --navy-mid: #18150F; --navy-light: #EDF7F2; --forest: #1A7A4A;
+      --forest-mid: #155E38; --forest-light: #EDF7F2; --terra: #C74B30;
+      --terra-dark: #A33B23; --terra-light: #FDF1EE; --amber: #C8860A;
+      --amber-light: #FEF5E4; --gold-l: #FEF5E4; --sage: #2D7A55;
+      --sage-light: #EAF5EF; --text-900: #1A1714; --text-700: #2E2A26;
+      --text-600: #3D3830; --text-500: #4A453F; --text-400: #6B655C;
+      --text-300: #8C857C; --bg-card: #FFFFFF; --bg-surface: #EDE8DF;
+      --bg-raised: #EDE8DF; --radius-sm: 4px; --radius-md: 8px;
+      --radius-lg: 12px; --radius-xl: 18px; --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.09);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.11);
+      --shadow-card: 0 0 0 1px rgba(0,0,0,.07), 0 2px 6px rgba(0,0,0,.05);
+      --transition: .18s cubic-bezier(.25,.46,.45,.94);
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --ease-spring: cubic-bezier(.34,1.4,.64,1);
+    }
+
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; -webkit-font-smoothing:antialiased; }
+    body { font-family:var(--sans); background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; line-height:1.6; }
+    a { color:var(--red); text-decoration:none; transition:color var(--t); }
+    a:hover { color:var(--dark); }
+    img { display:block; max-width:100%; }
+
+    .navbar {
+      position:sticky; top:0; z-index:200;
+      background:rgba(247,243,237,.97);
+      backdrop-filter:blur(20px) saturate(180%);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-inner { max-width:1280px; margin:0 auto; display:flex; align-items:center; height:60px; padding:0 1.5rem; }
+    .nav-logo { font-family:var(--serif); font-size:1.3rem; font-weight:400; color:var(--ink); display:flex; align-items:center; gap:.5rem; flex-shrink:0; margin-right:2.25rem; }
+    .nav-logo-icon { width:28px; height:28px; border-radius:var(--r2); background:var(--ink); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:.7rem; flex-shrink:0; }
+    .nav-links { display:flex; align-items:center; gap:.15rem; flex:1; }
+    .nav-link { padding:.35rem .8rem; border-radius:var(--r2); color:var(--text-2); font-size:.875rem; font-weight:500; transition:all var(--t); display:flex; align-items:center; gap:.38rem; }
+    .nav-link i { font-size:.72rem; opacity:.7; }
+    .nav-link:hover { color:var(--ink); background:var(--bg-alt); }
+    .nav-link.active { color:var(--ink); background:var(--bg-alt); font-weight:600; }
+    .nav-right { display:flex; align-items:center; gap:.5rem; margin-left:auto; }
+    .nav-btn { padding:.36rem 1rem; border-radius:var(--r5); font-size:.82rem; font-weight:600; cursor:pointer; border:none; transition:all var(--t); font-family:var(--sans); display:inline-flex; align-items:center; gap:.4rem; }
+    .nav-btn-ghost { background:transparent; border:1.5px solid var(--border-2); color:var(--text-2); }
+    .nav-btn-ghost:hover { border-color:var(--ink); color:var(--ink); }
+    .nav-btn-dark { background:var(--ink); color:#fff; }
+    .nav-btn-dark:hover { background:var(--ink-mid); }
+    .nav-avatar { width:30px; height:30px; border-radius:50%; border:2px solid var(--border); object-fit:cover; cursor:pointer; transition:border-color var(--t); }
+    .nav-avatar:hover { border-color:var(--red); }
+    .nav-dropdown { position:relative; }
+    .nav-dropdown-menu { display:none; position:absolute; right:0; top:calc(100%+.5rem); background:var(--surface); border:1px solid var(--border); border-radius:var(--r3); min-width:185px; padding:.35rem 0; box-shadow:var(--s3); }
+    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
+    .nav-dropdown-item { display:flex; align-items:center; gap:.55rem; padding:.5rem .95rem; color:var(--text-2); font-size:.85rem; transition:all var(--t); }
+    .nav-dropdown-item i { width:14px; font-size:.75rem; color:var(--text-3); }
+    .nav-dropdown-item:hover { background:var(--bg); color:var(--ink); }
+    .nav-dropdown-item.danger { color:var(--red); }
+    .nav-dropdown-item.danger i { color:var(--red); }
+    .nav-dropdown-item.danger:hover { background:var(--red-light); }
+    .nav-dropdown-divider { height:1px; background:var(--border); margin:.3rem 0; }
+    .nav-user-info { padding:.45rem .95rem .15rem; font-size:.68rem; color:var(--text-3); font-weight:600; text-transform:uppercase; letter-spacing:.09em; }
+
+    .flash-wrap { max-width:1280px; margin:.6rem auto 0; padding:0 1.5rem; }
+    .flash { display:flex; align-items:center; gap:.65rem; padding:.6rem .95rem; border-radius:var(--r2); font-size:.85rem; font-weight:500; margin-bottom:.4rem; border:1px solid transparent; }
+    .flash-success { background:var(--green-light); border-color:rgba(26,122,74,.2); color:#185A37; }
+    .flash-danger  { background:var(--red-light); border-color:rgba(199,75,48,.2); color:var(--red-dark); }
+    .flash-info    { background:#EEF4FF; border-color:rgba(59,130,246,.2); color:#1E40AF; }
+    .flash-warning { background:var(--gold-light); border-color:rgba(200,134,10,.2); color:#7A5500; }
+    .flash-close { margin-left:auto; cursor:pointer; background:none; border:none; color:inherit; opacity:.4; font-size:.9rem; }
+    .flash-close:hover { opacity:1; }
+
+    .main-content { flex:1; }
+    .container { max-width:1280px; margin:0 auto; padding:0 1.5rem; }
+
+    .section-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1.1rem; }
+    .section-title { font-family:var(--serif); font-size:1.5rem; font-weight:400; color:var(--ink); line-height:1.15; }
+    .section-title .accent { color:var(--red); font-style:italic; }
+    .section-link { font-size:.8rem; color:var(--text-3); font-weight:500; transition:color var(--t); display:inline-flex; align-items:center; gap:.3rem; }
+    .section-link:hover { color:var(--red); }
+
+    /* ── Book card — fixed 140×196px, no overflow ── */
+    .book-card {
+      background:var(--surface); border-radius:var(--r3); overflow:hidden;
+      box-shadow:0 0 0 1px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.05);
+      transition:transform .22s var(--ease), box-shadow .22s var(--ease);
+      cursor:pointer; width:140px; flex-shrink:0;
+    }
+    .book-card:hover { transform:translateY(-4px); box-shadow:0 0 0 1px rgba(0,0,0,.1), 0 12px 32px rgba(0,0,0,.12); }
+    .book-cover-wrap { position:relative; overflow:hidden; }
+    .book-cover { width:140px; height:196px; object-fit:cover; background:var(--bg-alt); display:block; transition:transform .35s var(--ease); }
+    .book-card:hover .book-cover { transform:scale(1.04); }
+    .book-badge {
+      position:absolute; bottom:.4rem; left:.4rem;
+      background:rgba(255,255,255,.95); border-radius:var(--r5);
+      padding:.14rem .45rem; font-size:.68rem; font-weight:700;
+      color:var(--gold); display:flex; align-items:center; gap:.18rem;
+      box-shadow:0 1px 4px rgba(0,0,0,.12);
+    }
+    .book-badge i { font-size:.6rem; }
+    .book-info { padding:.6rem .65rem .55rem; }
+    .book-title { font-family:var(--serif); font-size:.82rem; font-weight:400; color:var(--ink); line-height:1.3; margin-bottom:.1rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .book-author { font-size:.68rem; color:var(--text-3); margin-bottom:.42rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .book-actions { display:flex; gap:.28rem; }
+    .book-action-btn {
+      flex:1; padding:.28rem; border:1px solid var(--border); border-radius:var(--r1);
+      background:transparent; color:var(--text-3); font-size:.7rem; cursor:pointer;
+      transition:all var(--t); display:flex; align-items:center; justify-content:center;
+      font-family:var(--sans);
+    }
+    .book-action-btn:hover { border-color:var(--red); color:var(--red); background:var(--red-light); }
+    .book-action-btn.wishlisted { background:var(--red-light); border-color:var(--red); color:var(--red); }
+
+    .books-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem; }
+
+    .stars { display:flex; gap:2px; align-items:center; }
+    .star { font-size:1rem; color:var(--border-2); cursor:pointer; transition:color var(--t); }
+    .star.filled, .star:hover, .star.hover { color:var(--gold); }
+    .stars-static .star { cursor:default; font-size:.8rem; }
+
+    .badge { display:inline-flex; align-items:center; padding:.16rem .55rem; border-radius:var(--r5); font-size:.7rem; font-weight:600; }
+    .badge-red,.badge-terra { background:var(--red-light); color:var(--red); }
+    .badge-dark,.badge-navy { background:rgba(26,23,20,.08); color:var(--ink); }
+    .badge-gold,.badge-amber { background:var(--gold-light); color:var(--gold); }
+    .badge-green,.badge-sage,.badge-forest { background:var(--green-light); color:var(--green); }
+    .badge-muted { background:var(--bg-alt); color:var(--text-3); }
+    .badge-red-outline { background:transparent; border:1px solid var(--red); color:var(--red); }
+
+    .btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem 1.35rem; border-radius:var(--r5); font-size:.875rem; font-weight:600; cursor:pointer; border:none; transition:all var(--t); font-family:var(--sans); white-space:nowrap; }
+    .btn-primary { background:var(--ink); color:#fff; }
+    .btn-primary:hover { background:var(--ink-mid); transform:translateY(-1px); box-shadow:var(--s2); color:#fff; }
+    .btn-terra,.btn-gold,.btn-terra-alt { background:var(--red); color:#fff; }
+    .btn-terra:hover,.btn-gold:hover,.btn-terra-alt:hover { background:var(--red-dark); transform:translateY(-1px); color:#fff; }
+    .btn-ghost { background:transparent; border:1.5px solid var(--border-2); color:var(--text-2); }
+    .btn-ghost:hover { border-color:var(--ink); color:var(--ink); background:var(--bg-alt); }
+    .btn-danger { background:var(--red-light); border:1.5px solid rgba(199,75,48,.25); color:var(--red-dark); }
+    .btn-danger:hover { background:#F5DDD3; }
+    .btn-sage,.btn-green { background:var(--green); color:#fff; }
+    .btn-sage:hover,.btn-green:hover { background:#155E38; transform:translateY(-1px); }
+    .btn-sm { padding:.3rem .85rem; font-size:.78rem; }
+    .btn-lg { padding:.7rem 1.85rem; font-size:.95rem; }
+
+    .form-group { margin-bottom:1.2rem; }
+    .form-label { display:block; font-size:.8rem; font-weight:600; color:var(--text-2); margin-bottom:.35rem; }
+    .form-input { width:100%; padding:.6rem .85rem; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r2); color:var(--text); font-size:.9rem; font-family:var(--sans); transition:border-color var(--t),box-shadow var(--t); }
+    .form-input:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(199,75,48,.1); }
+    .form-input::placeholder { color:var(--text-3); }
+    select.form-input { cursor:pointer; }
+    textarea.form-input { resize:vertical; min-height:100px; }
+    .form-error { font-size:.76rem; color:var(--red-dark); margin-top:.25rem; }
+
+    .pagination { display:flex; align-items:center; gap:.3rem; flex-wrap:wrap; justify-content:center; margin-top:2.5rem; }
+    .page-btn { min-width:34px; height:34px; padding:0 .7rem; border:1.5px solid var(--border); border-radius:var(--r2); color:var(--text-2); font-size:.82rem; font-weight:500; transition:all var(--t); display:inline-flex; align-items:center; justify-content:center; background:var(--surface); }
+    .page-btn:hover { border-color:var(--ink); color:var(--ink); }
+    .page-btn.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .page-btn.disabled { opacity:.32; pointer-events:none; }
+
+    .empty-state { text-align:center; padding:5rem 1rem; color:var(--text-3); }
+    .empty-state h3 { font-family:var(--serif); font-size:1.35rem; color:var(--text-2); margin-bottom:.5rem; font-weight:400; }
+    .empty-state p { margin-bottom:1.5rem; font-size:.9rem; }
+    .divider { height:1px; background:var(--border); margin:1.5rem 0; }
+
+    footer { background:var(--dark); margin-top:auto; }
+    .footer-top { max-width:1280px; margin:0 auto; padding:3rem 1.5rem 2rem; display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; gap:2rem; }
+    @media(max-width:720px){ .footer-top { grid-template-columns:1fr 1fr; } }
+    @media(max-width:460px){ .footer-top { grid-template-columns:1fr; } }
+    .foot-logo { font-family:var(--serif); font-size:1.25rem; font-weight:400; color:#fff; display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
+    .foot-brand p { font-size:.8rem; color:rgba(255,255,255,.35); line-height:1.65; max-width:220px; }
+    .foot-col h4 { font-size:.66rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.25); margin-bottom:.8rem; }
+    .foot-link { display:block; font-size:.82rem; color:rgba(255,255,255,.4); padding:.2rem 0; transition:color var(--t); }
+    .foot-link:hover { color:#fff; }
+    .footer-bottom { border-top:1px solid rgba(255,255,255,.07); max-width:1280px; margin:0 auto; padding:1rem 1.5rem; text-align:center; font-size:.74rem; color:rgba(255,255,255,.25); }
+  </style>
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="{{ url_for('books.home') }}" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fa-solid fa-book-open"></i></div>
+      BookShelf
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('books.browse') }}" class="nav-link {% if request.endpoint == 'books.browse' %}active{% endif %}">
+        <i class="fa-solid fa-compass"></i> Browse
+      </a>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('recs.index') }}" class="nav-link {% if request.blueprint == 'recs' %}active{% endif %}">
+        <i class="fa-solid fa-wand-sparkles"></i> For You
+      </a>
+      <a href="{{ url_for('user.wishlist') }}" class="nav-link {% if request.endpoint == 'user.wishlist' %}active{% endif %}">
+        <i class="fa-regular fa-bookmark"></i> Wishlist
+      </a>
+      {% endif %}
+    </div>
+    <div class="nav-right">
+      {% if current_user.is_authenticated %}
+      <div class="nav-dropdown">
+        <img src="{{ current_user.avatar_url or 'https://api.dicebear.com/8.x/initials/svg?seed='~current_user.username }}" alt="{{ current_user.username }}" class="nav-avatar">
+        <div class="nav-dropdown-menu">
+          <div class="nav-user-info">{{ current_user.username }}</div>
+          <div class="nav-dropdown-divider"></div>
+          <a href="{{ url_for('user.profile') }}"    class="nav-dropdown-item"><i class="fa-regular fa-user"></i> Profile</a>
+          <a href="{{ url_for('user.wishlist') }}"   class="nav-dropdown-item"><i class="fa-regular fa-bookmark"></i> Wishlist</a>
+          {% if current_user.is_admin %}
+          <div class="nav-dropdown-divider"></div>
+          <a href="{{ url_for('admin.dashboard') }}" class="nav-dropdown-item"><i class="fa-solid fa-gauge"></i> Admin Panel</a>
+          {% endif %}
+          <div class="nav-dropdown-divider"></div>
+          <a href="{{ url_for('auth.logout') }}" class="nav-dropdown-item danger"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+        </div>
+      </div>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}"    class="nav-btn nav-btn-ghost">Sign In</a>
+      <a href="{{ url_for('auth.register') }}" class="nav-btn nav-btn-dark">Join Free →</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-wrap">
+  {% for category, message in messages %}
+  <div class="flash flash-{{ category }}">
+    <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'danger' %}fa-circle-xmark{% elif category == 'info' %}fa-circle-info{% else %}fa-triangle-exclamation{% endif %}"></i>
+    {{ message }}
+    <button class="flash-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<main class="main-content">{% block content %}{% endblock %}</main>
+
+<footer>
+  <div class="footer-top">
+    <div class="foot-brand">
+      <div class="foot-logo"><i class="fa-solid fa-book-open" style="color:var(--gold)"></i> BookShelf</div>
+      <p>Your personal reading companion. Discover, rate and collect books that move you.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Discover</h4>
+      <a href="{{ url_for('books.browse') }}" class="foot-link">Browse All</a>
+      <a href="{{ url_for('books.browse') }}?sort=top_rated" class="foot-link">Top Rated</a>
+      <a href="{{ url_for('books.browse') }}?sort=newest" class="foot-link">Newest</a>
+      {% if current_user.is_authenticated %}<a href="{{ url_for('recs.index') }}" class="foot-link">For You</a>{% endif %}
+    </div>
+    <div class="foot-col">
+      <h4>Account</h4>
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('user.profile') }}"  class="foot-link">My Profile</a>
+      <a href="{{ url_for('user.wishlist') }}" class="foot-link">My Wishlist</a>
+      <a href="{{ url_for('auth.logout') }}"   class="foot-link">Sign Out</a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}"    class="foot-link">Sign In</a>
+      <a href="{{ url_for('auth.register') }}" class="foot-link">Create Account</a>
+      {% endif %}
+    </div>
+    <div class="foot-col">
+      <h4>BookShelf</h4>
+      <a href="{{ url_for('books.home') }}" class="foot-link">Home</a>
+      {% if current_user.is_admin %}<a href="{{ url_for('admin.dashboard') }}" class="foot-link">Admin</a>{% endif %}
+    </div>
+  </div>
+  <div class="footer-bottom">© 2025 BookShelf · Built for readers</div>
+</footer>
+
+<script>
+function csrf(){
+  const el = document.querySelector('meta[name="csrf-token"]');
+  return el ? el.content : '';
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

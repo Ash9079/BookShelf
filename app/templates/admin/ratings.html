@@ -1,0 +1,90 @@
+{% extends "admin/base_admin.html" %}
+{% block admin_title %}Reviews{% endblock %}
+{% block breadcrumb %}Reviews{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">All Reviews</div>
+    <div class="page-subtitle">{{ pagination.total }} total ratings</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Book</th>
+          <th>Rating</th>
+          <th>Review</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in ratings %}
+      {% set u = users_map.get(r.user_id) %}
+      {% set b = books_map.get(r.book_id) %}
+      <tr id="rating-row-{{ r.id }}">
+        <td>
+          {% if u %}
+          <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" style="color:var(--blue);font-weight:500">
+            {{ u.username }}
+          </a>
+          {% else %}—{% endif %}
+        </td>
+        <td style="max-width:200px">
+          {% if b %}
+          <a href="{{ url_for('books.detail', book_id=b.id) }}" target="_blank"
+             style="color:var(--blue);font-size:.85rem">
+            {{ b.title[:45] }}{% if b.title|length > 45 %}…{% endif %}
+          </a>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          <span class="badge badge-amber">{{ r.rating }}★</span>
+        </td>
+        <td style="font-size:.8rem;color:var(--text-light);max-width:200px">
+          {{ (r.review or '—')[:70] }}{% if r.review and r.review|length > 70 %}…{% endif %}
+        </td>
+        <td style="font-size:.78rem;color:var(--text-light);white-space:nowrap">
+          {{ r.created_at.strftime('%b %d, %Y') }}
+        </td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteRating({{ r.id }}, this)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not ratings %}
+      <tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:2rem">No ratings yet.</td></tr>
+      {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.pages > 1 %}
+  <div style="padding:1rem" class="pagination">
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+      <a href="{{ url_for('admin.ratings', page=p) }}"
+         class="page-btn {% if p == pagination.page %}active{% endif %}">{{ p }}</a>
+      {% else %}
+      <span class="page-btn" style="cursor:default">…</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function deleteRating(id, btn) {
+  if (!confirm('Delete this review permanently?')) return;
+  ajaxPost('/admin/ratings/' + id + '/delete', {}, () => {
+    document.getElementById('rating-row-' + id).remove();
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ─── HERO ─────────────────────────────────────────────────────── */
+.hero-backdrop {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #1B2D4F 0%, #2A4170 60%, #3A2A1F 100%);
+  min-height: 420px;
+}
+.hero-backdrop::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='.03'%3E%3Cpath d='M0 0h40v40H0zm40 40h40v40H40z'/%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-inner {
+  position: relative; z-index: 2;
+  max-width: 1300px; margin: 0 auto; padding: 3rem 2rem;
+  display: grid; grid-template-columns: 200px 1fr; gap: 3rem; align-items: start;
+}
+@media(max-width:700px){ .hero-inner { grid-template-columns: 1fr; gap: 1.5rem; } }
+
+/* Cover */
+.cover-col { position: sticky; top: 82px; }
+.cover-img {
+  width: 100%; aspect-ratio: 2/3; object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08);
+  transition: transform .3s ease;
+}
+.cover-img:hover { transform: scale(1.02) rotate(-1deg); }
+
+/* Info col */
+.breadcrumb { font-size: .78rem; color: rgba(255,255,255,.45); margin-bottom: 1rem; }
+.breadcrumb a { color: rgba(255,255,255,.6); transition: color .2s; }
+.breadcrumb a:hover { color: white; }
+.hero-title {
+  font-family: var(--font-display); font-size: clamp(1.6rem,4vw,2.6rem);
+  font-weight: 700; color: white; line-height: 1.15; margin-bottom: .5rem;
+}
+.hero-author { font-size: 1.05rem; color: #F5C67B; margin-bottom: 1.25rem; font-weight: 500; }
+
+/* Rating display */
+.global-rating {
+  display: inline-flex; align-items: center; gap: .75rem;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 40px; padding: .5rem 1.1rem; margin-bottom: 1.25rem;
+  backdrop-filter: blur(8px);
+}
+.global-rating-num {
+  font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: #F5C67B;
+}
+.global-stars { color: #F5C67B; font-size: .95rem; letter-spacing: 2px; }
+.global-count { font-size: .8rem; color: rgba(255,255,255,.5); }
+
+/* Meta pills */
+.meta-pills { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1.25rem; }
+.meta-pill {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .28rem .75rem; border-radius: 40px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  font-size: .78rem; color: rgba(255,255,255,.65); font-weight: 500;
+}
+.meta-pill i { font-size: .72rem; opacity: .7; }
+
+/* Genre chips */
+.genre-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.35rem; }
+.genre-chip {
+  padding: .28rem .8rem; border-radius: 40px;
+  background: rgba(194,82,43,.25); border: 1px solid rgba(194,82,43,.4);
+  font-size: .78rem; color: #FFA07A; font-weight: 600; transition: all .2s;
+}
+.genre-chip:hover { background: rgba(194,82,43,.45); color: white; }
+
+/* Description */
+.hero-desc {
+  color: rgba(255,255,255,.65); line-height: 1.8; font-size: .93rem;
+  margin-bottom: 1.5rem; max-width: 620px;
+}
+
+/* Action buttons */
+.hero-actions { display: flex; gap: .65rem; flex-wrap: wrap; }
+.btn-hero-primary {
+  padding: .6rem 1.5rem; background: var(--terra); color: white;
+  border-radius: 40px; font-weight: 700; font-size: .9rem; border: none;
+  cursor: pointer; font-family: var(--font-body);
+  display: inline-flex; align-items: center; gap: .45rem;
+  transition: all .2s; box-shadow: 0 4px 16px rgba(194,82,43,.4);
+}
+.btn-hero-primary:hover { background: #A8421D; transform: translateY(-2px); color: white; }
+.btn-hero-primary.saved { background: #16a34a; }
+.btn-hero-ghost {
+  padding: .6rem 1.5rem; background: rgba(255,255,255,.1); color: white;
+  border-radius: 40px; font-weight: 600; font-size: .9rem;
+  border: 1.5px solid rgba(255,255,255,.2); cursor: pointer;
+  font-family: var(--font-body); display: inline-flex; align-items: center; gap: .45rem;
+  transition: all .2s;
+}
+.btn-hero-ghost:hover { background: rgba(255,255,255,.2); color: white; }
+
+/* ─── BODY AREA ─────────────────────────────────────────────── */
+.detail-body {
+  max-width: 1300px; margin: 0 auto; padding: 2.5rem 2rem;
+  display: grid; grid-template-columns: 1fr 360px; gap: 2.5rem; align-items: start;
+}
+@media(max-width:900px){ .detail-body { grid-template-columns: 1fr; } }
+
+/* ─── REVIEWS PANEL (left) ──────────────────────────────────── */
+.reviews-panel h2 {
+  font-family: var(--font-display); font-size: 1.4rem; font-weight: 700;
+  color: var(--text-900); margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: .6rem;
+}
+.reviews-panel h2 .count-badge {
+  font-family: var(--font-body); font-size: .78rem; font-weight: 700;
+  background: var(--navy-light); color: var(--navy);
+  padding: .15rem .6rem; border-radius: 40px;
+}
+
+/* My review card */
+.my-review-card {
+  border-radius: var(--radius-lg); overflow: hidden;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 12px rgba(26,22,20,.08), 0 0 0 2px var(--amber);
+}
+.my-review-head {
+  background: linear-gradient(135deg, #1B2D4F, #2A4170);
+  padding: .85rem 1.1rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.my-review-user { display: flex; align-items: center; gap: .6rem; }
+.my-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.25); object-fit: cover;
+}
+.my-name { font-size: .85rem; font-weight: 700; color: white; }
+.you-badge {
+  font-size: .68rem; font-weight: 700; padding: .12rem .5rem;
+  background: var(--amber); color: white; border-radius: 40px;
+}
+.my-stars-display { color: #F5C67B; font-size: .9rem; letter-spacing: 2px; }
+.my-review-body { background: white; padding: 1rem 1.1rem; }
+.my-review-text {
+  font-size: .875rem; color: var(--text-600); line-height: 1.7;
+  border-left: 3px solid var(--amber); padding-left: .75rem;
+  font-style: italic; margin-bottom: .6rem;
+}
+.my-review-no-text { font-size: .82rem; color: var(--text-300); font-style: italic; }
+.my-review-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+
+/* Other review cards */
+.review-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.1rem 1.25rem;
+  margin-bottom: .85rem; box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s, transform .2s;
+}
+.review-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.review-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: .75rem; }
+.review-user-info { display: flex; align-items: center; gap: .7rem; }
+.review-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid var(--border); object-fit: cover; flex-shrink: 0;
+  background: var(--cream-alt);
+}
+.review-name { font-weight: 700; font-size: .88rem; color: var(--text-900); }
+.review-stars-small { color: var(--amber); font-size: .8rem; letter-spacing: 1px; margin-top: .1rem; }
+.review-date { font-size: .75rem; color: var(--text-400); white-space: nowrap; }
+.review-text { font-size: .875rem; color: var(--text-600); line-height: 1.7; }
+
+.empty-reviews {
+  text-align: center; padding: 2.5rem 1.5rem;
+  background: var(--cream-alt); border-radius: var(--radius-lg);
+  border: 2px dashed var(--border); color: var(--text-400);
+}
+.empty-reviews .big-icon { font-size: 2.5rem; margin-bottom: .75rem; opacity: .3; }
+
+/* ─── RATING WIDGET (right sidebar) ────────────────────────── */
+.sidebar-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.rate-card {
+  background: white; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); overflow: hidden;
+  position: relative; 
+}
+.rate-card-head {
+  background: linear-gradient(135deg, var(--navy), #2A4170);
+  padding: 1rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rate-card-title { font-size: .9rem; font-weight: 700; color: white; display: flex; align-items: center; gap: .45rem; }
+.rate-card-title i { color: #F5C67B; }
+.rate-card-body { padding: 1.25rem; }
+
+/* Star row in sidebar */
+.star-row { display: flex; gap: 4px; margin-bottom: .5rem; }
+.s-star {
+  font-size: 2.2rem; color: var(--text-300); cursor: pointer;
+  transition: color .12s, transform .1s; line-height: 1;
+}
+.s-star.on { color: var(--amber); }
+.s-star.hover { color: var(--amber); transform: scale(1.2); }
+.star-hint {
+  font-size: .78rem; color: var(--text-400); font-weight: 600;
+  margin-bottom: 1rem; min-height: 1.2em;
+}
+
+.rate-textarea {
+  width: 100%; padding: .65rem .85rem;
+  background: var(--cream-alt); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); color: var(--text-900);
+  font-size: .875rem; font-family: var(--font-body);
+  resize: vertical; min-height: 88px; margin-bottom: .65rem;
+  transition: border-color .2s;
+}
+.rate-textarea:focus { outline: none; border-color: var(--terra); box-shadow: 0 0 0 3px rgba(194,82,43,.1); }
+.rate-textarea::placeholder { color: var(--text-300); }
+.rate-textarea:disabled { opacity: .6; cursor: default; }
+
+.rate-footer { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.char-hint { font-size: .72rem; color: var(--text-400); margin-left: auto; }
+.rate-msg {
+  width: 100%; margin-top: .6rem; font-size: .8rem; font-weight: 600;
+  display: flex; align-items: center; gap: .4rem; min-height: 1.5em;
+}
+.rate-msg.ok { color: #16a34a; }
+.rate-msg.err { color: #C0392B; }
+
+/* Submitted state inside sidebar */
+.submitted-state { text-align: center; padding: .25rem 0; }
+.submitted-stars { font-size: 1.6rem; color: var(--amber); letter-spacing: 3px; margin-bottom: .3rem; }
+.submitted-label { font-size: .8rem; color: var(--text-400); margin-bottom: .85rem; }
+.submitted-review-preview {
+  background: var(--cream-alt); border-radius: var(--radius-md);
+  padding: .7rem .9rem; font-size: .83rem; color: var(--text-600);
+  line-height: 1.6; text-align: left; font-style: italic;
+  border-left: 3px solid var(--amber); margin-bottom: .85rem;
+}
+
+/* Similar books mini-grid */
+.similar-card {
+  display: flex; gap: .75rem; align-items: center;
+  padding: .65rem 0; border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: all .2s;
+}
+.similar-card:last-child { border-bottom: none; }
+.similar-card:hover { transform: translateX(3px); }
+.similar-thumb {
+  width: 40px; height: 56px; object-fit: cover;
+  border-radius: 5px; flex-shrink: 0; background: var(--cream-alt);
+}
+.similar-info { min-width: 0; }
+.similar-title { font-size: .82rem; font-weight: 600; color: var(--text-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.similar-author { font-size: .75rem; color: var(--text-400); }
+.similar-rating { font-size: .75rem; color: var(--amber); font-weight: 700; margin-left: auto; white-space: nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ─── HERO ──────────────────────────────────────────────────── -->
+<div class="hero-backdrop">
+  <div class="hero-inner">
+
+    <div class="cover-col">
+      <img class="cover-img" src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" onerror="this.src='/static/img/no-cover.svg'">
+    </div>
+
+    <div>
+      <p class="breadcrumb">
+        <a href="{{ url_for('books.home') }}"><i class="fa-solid fa-house"></i></a>
+        &nbsp;›&nbsp;
+        <a href="{{ url_for('books.browse') }}">Browse</a>
+        &nbsp;›&nbsp; {{ book.title[:40] }}{% if book.title|length > 40 %}…{% endif %}
+      </p>
+
+      <h1 class="hero-title">{{ book.title }}</h1>
+      <p class="hero-author">by {{ book.author or 'Unknown Author' }}</p>
+
+      <div class="global-rating">
+        <span class="global-rating-num">{{ '%.1f'|format(book.average_rating) }}</span>
+        <span class="global-stars">{% for i in range(1,6) %}{% if i <= book.average_rating|round %}★{% else %}☆{% endif %}{% endfor %}</span>
+        <span class="global-count">{{ book.ratings_count or 0 }} rating{% if book.ratings_count != 1 %}s{% endif %}</span>
+      </div>
+
+      {% if book.series %}
+      <p style="font-size:.85rem;color:var(--gold);font-weight:600;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;">
+        <i class="fa-solid fa-layer-group"></i> {{ book.series }}
+      </p>
+      {% endif %}
+
+      <div class="meta-pills">
+        {% if book.page_count %}<span class="meta-pill"><i class="fa-solid fa-file-lines"></i>{{ book.page_count | pages_fmt }}</span>{% endif %}
+        {% if book.language %}<span class="meta-pill"><i class="fa-solid fa-language"></i>{{ book.language }}</span>{% endif %}
+        {% if book.publication_date %}<span class="meta-pill"><i class="fa-regular fa-calendar"></i>{{ book.publication_date }}</span>{% endif %}
+        {% if book.category %}<span class="meta-pill"><i class="fa-solid fa-tag"></i>{{ book.category }}</span>{% endif %}
+        {% if book.region %}<span class="meta-pill"><i class="fa-solid fa-globe"></i>{{ book.region }}</span>{% endif %}
+        {% if book.publisher %}<span class="meta-pill"><i class="fa-solid fa-building"></i>{{ book.publisher }}</span>{% endif %}
+        {% if book.isbn and book.isbn|lower not in ('n/a','na','none') %}<span class="meta-pill"><i class="fa-solid fa-barcode"></i>ISBN {{ book.isbn }}</span>{% endif %}
+      </div>
+
+      {% if book.genres %}
+      <div class="genre-chips">
+        {% for g in book.genres %}<a href="{{ url_for('books.browse') }}?genre={{ g.id }}" class="genre-chip">{{ g.name }}</a>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if book.description %}
+      <p class="hero-desc">{{ book.description[:500] }}{% if book.description|length > 500 %}…{% endif %}</p>
+      {% endif %}
+
+      <div class="hero-actions">
+        <button id="wishBtn" class="btn-hero-primary {% if in_wishlist %}saved{% endif %}" onclick="toggleWish({{ book.id }})">
+          <i class="fa-{% if in_wishlist %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+          {% if in_wishlist %}Saved to Wishlist{% else %}Want to Read{% endif %}
+        </button>
+        <a href="{{ url_for('books.browse') }}" class="btn-hero-ghost"><i class="fa-solid fa-compass"></i> Browse More</a>
+      </div>
+
+      {% if book.amazon_link or book.free_source_link %}
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;">
+        {% if book.free_source_link %}
+        <a href="{{ book.free_source_link }}" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:.45rem;padding:.42rem 1.1rem;background:var(--green-light);color:var(--green);border:1.5px solid rgba(26,122,74,.25);border-radius:var(--r5);font-size:.82rem;font-weight:700;font-family:var(--sans);transition:all .18s;">
+          <i class="fa-solid fa-book-open"></i>
+          Read Free{% if book.free_source_name %} · {{ book.free_source_name }}{% endif %}
+        </a>
+        {% endif %}
+        {% if book.amazon_link %}
+        <a href="{{ book.amazon_link }}" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:.45rem;padding:.42rem 1.1rem;background:#FFF8F0;color:#E47911;border:1.5px solid rgba(228,121,17,.25);border-radius:var(--r5);font-size:.82rem;font-weight:700;font-family:var(--sans);transition:all .18s;">
+          <i class="fa-brands fa-amazon"></i> Buy on Amazon
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── BODY ──────────────────────────────────────────────────── -->
+<div class="detail-body">
+
+  <!-- LEFT: Reviews -->
+  <div class="reviews-panel">
+    <h2>
+      <i class="fa-regular fa-comments" style="color:var(--terra)"></i>
+      Reader Reviews
+      <span class="count-badge">{{ reviews|length + (1 if user_rating else 0) }}</span>
+    </h2>
+
+    <!-- Current user's review pinned -->
+    {% if current_user.is_authenticated and user_rating %}
+    <div class="my-review-card" id="myReviewCard">
+      <div class="my-review-head">
+        <div class="my-review-user">
+          <img class="my-avatar"
+               src="{{ current_user.avatar_url or 'https://api.dicebear.com/8.x/initials/svg?seed=' ~ current_user.username }}"
+               alt="{{ current_user.username }}">
+          <span class="my-name">{{ current_user.username }}</span>
+          <span class="you-badge">You</span>
+        </div>
+        <span class="my-stars-display" id="myCardStars">
+          {% for i in range(1,6) %}{% if i <= user_rating %}★{% else %}☆{% endif %}{% endfor %}
+        </span>
+      </div>
+      <div class="my-review-body">
+        {% if user_review %}
+        <p class="my-review-text" id="myCardText">{{ user_review }}</p>
+        {% else %}
+        <p class="my-review-no-text" id="myCardText">No written review yet — add one by clicking Edit.</p>
+        {% endif %}
+        <div class="my-review-actions">
+          <button class="btn btn-ghost btn-sm" onclick="enterEditMode()"><i class="fa-solid fa-pen"></i> Edit Review</button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Other users -->
+    {% for r in reviews %}
+    <div class="review-card">
+      <div class="review-top">
+        <div class="review-user-info">
+          <img class="review-avatar"
+               src="{{ r.user.avatar_url if r.user.avatar_url else 'https://api.dicebear.com/8.x/initials/svg?seed=' ~ r.user.username }}"
+               alt="{{ r.user.username }}">
+          <div>
+            <div class="review-name">{{ r.user.username }}</div>
+            <div class="review-stars-small">{% for i in range(1,6) %}{% if i <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+          </div>
+        </div>
+        <span class="review-date">{{ r.created_at.strftime('%b %d, %Y') }}</span>
+      </div>
+      <p class="review-text">{{ r.review }}</p>
+    </div>
+    {% endfor %}
+
+    {% if not reviews and not (current_user.is_authenticated and user_rating) %}
+    <div class="empty-reviews">
+      <div class="big-icon">💬</div>
+      <p style="font-weight:600;color:var(--text-600);margin-bottom:.3rem">No reviews yet</p>
+      <p style="font-size:.85rem">Be the first to share your thoughts.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="sidebar-col">
+
+    <!-- Rating card -->
+    {% if current_user.is_authenticated %}
+    <div class="rate-card">
+      <div class="rate-card-head">
+        <span class="rate-card-title"><i class="fa-solid fa-star"></i> Your Rating</span>
+        {% if user_rating %}
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.2);border-radius:40px;padding:.3rem .8rem;font-size:.75rem;cursor:pointer;font-family:var(--font-body)" id="editBtn" onclick="enterEditMode()">
+          <i class="fa-solid fa-pen"></i> Edit
+        </button>
+        {% endif %}
+      </div>
+      <div class="rate-card-body">
+
+        <!-- Submitted view -->
+        {% if user_rating %}
+        <div id="submittedView" class="submitted-state">
+          <div class="submitted-stars" id="displayStars">
+            {% for i in range(1,6) %}{% if i <= user_rating %}★{% else %}☆{% endif %}{% endfor %}
+          </div>
+          <div class="submitted-label" id="displayLabel">{{ ['','Terrible','Poor','Okay','Good','Excellent'][user_rating|int] }}</div>
+          {% if user_review %}
+          <div class="submitted-review-preview" id="displayReview">{{ user_review }}</div>
+          {% else %}
+          <div class="submitted-review-preview" id="displayReview" style="color:var(--text-300);font-style:normal">No review added yet.</div>
+          {% endif %}
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="enterEditMode()">
+            <i class="fa-solid fa-pen"></i> Edit Rating & Review
+          </button>
+        </div>
+
+        <!-- Edit view (hidden initially) -->
+        <div id="editView" style="display:none">
+          <div class="star-row" id="starRow">
+            {% for i in range(1,6) %}<span class="s-star {% if i <= user_rating %}on{% endif %}" data-v="{{ i }}">★</span>{% endfor %}
+          </div>
+          <div class="star-hint" id="starHint">{{ ['','Terrible','Poor','Okay','Good','Excellent'][user_rating|int] }}</div>
+          <textarea class="rate-textarea" id="rateReview" placeholder="Update your review…" maxlength="1000">{{ user_review or '' }}</textarea>
+          <div class="rate-footer">
+            <button class="btn btn-terra btn-sm" onclick="submitRating({{ book.id }})"><i class="fa-solid fa-check"></i> Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">Cancel</button>
+            <span class="char-hint" id="charHint">{{ (user_review or '')|length }}/1000</span>
+          </div>
+          <div class="rate-msg" id="rateMsg" style="display:none"></div>
+        </div>
+
+        {% else %}
+        <!-- New rating input -->
+        <div id="editView">
+          <div class="star-row" id="starRow">
+            {% for i in range(1,6) %}<span class="s-star" data-v="{{ i }}">★</span>{% endfor %}
+          </div>
+          <div class="star-hint" id="starHint">Tap a star to rate</div>
+          <textarea class="rate-textarea" id="rateReview" placeholder="Write a review (optional)…" maxlength="1000"></textarea>
+          <div class="rate-footer">
+            <button class="btn btn-terra btn-sm" onclick="submitRating({{ book.id }})"><i class="fa-solid fa-paper-plane"></i> Submit</button>
+            <span class="char-hint" id="charHint">0/1000</span>
+          </div>
+          <div class="rate-msg" id="rateMsg" style="display:none"></div>
+        </div>
+        <div id="submittedView" style="display:none"></div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    {% else %}
+    <div class="rate-card">
+      <div class="rate-card-head"><span class="rate-card-title"><i class="fa-solid fa-star"></i> Rate this Book</span></div>
+      <div class="rate-card-body" style="text-align:center;padding:1.5rem">
+        <p style="color:var(--text-400);margin-bottom:1rem;font-size:.9rem">Sign in to rate and review</p>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-terra" style="width:100%;justify-content:center"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Similar books -->
+    {% if similar %}
+    <div style="background:white;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden">
+      <div style="padding:.85rem 1.1rem;border-bottom:1px solid var(--border);font-weight:700;font-size:.88rem;color:var(--text-900);display:flex;align-items:center;gap:.45rem">
+        <i class="fa-solid fa-book-open" style="color:var(--terra)"></i> You Might Also Like
+      </div>
+      <div style="padding:.5rem 1rem 1rem">
+        {% for b in similar[:5] %}
+        <div class="similar-card" onclick="location.href='{{ url_for('books.detail', book_id=b.id) }}'">
+          <img class="similar-thumb" src="{{ b.cover() or '/static/img/no-cover.svg' }}" alt="{{ b.title }}" onerror="this.src='/static/img/no-cover.svg'">
+          <div class="similar-info">
+            <div class="similar-title">{{ b.title }}</div>
+            <div class="similar-author">{{ b.author or 'Unknown' }}</div>
+          </div>
+          <span class="similar-rating">★ {{ '%.1f'|format(b.average_rating) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /sidebar -->
+</div><!-- /body -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+const LABELS = ['','Terrible','Poor','Okay','Good','Excellent'];
+let sel = {{ user_rating or 0 }};
+
+// ── Stars ─────────────────────────────────────────────────────
+document.querySelectorAll('.s-star').forEach(st => {
+  st.addEventListener('mouseover', () => {
+    const v = +st.dataset.v;
+    document.querySelectorAll('.s-star').forEach((s,i) => s.classList.toggle('hover', i < v));
+    document.getElementById('starHint').textContent = LABELS[v];
+  });
+  st.addEventListener('mouseout', () => {
+    document.querySelectorAll('.s-star').forEach((s,i) => { s.classList.remove('hover'); s.classList.toggle('on', i < sel); });
+    document.getElementById('starHint').textContent = sel ? LABELS[sel] : 'Tap a star to rate';
+  });
+  st.addEventListener('click', () => {
+    sel = +st.dataset.v;
+    document.querySelectorAll('.s-star').forEach((s,i) => s.classList.toggle('on', i < sel));
+    document.getElementById('starHint').textContent = LABELS[sel];
+  });
+});
+
+// ── Char count ────────────────────────────────────────────────
+const ta = document.getElementById('rateReview');
+const ch = document.getElementById('charHint');
+if (ta && ch) ta.addEventListener('input', () => ch.textContent = ta.value.length + '/1000');
+
+// ── Edit toggle ───────────────────────────────────────────────
+function enterEditMode() {
+  document.getElementById('submittedView').style.display = 'none';
+  document.getElementById('editView').style.display = 'block';
+  const eb = document.getElementById('editBtn');
+  if (eb) eb.style.display = 'none';
+  if (ta) ta.focus();
+}
+function cancelEdit() {
+  document.getElementById('editView').style.display = 'none';
+  document.getElementById('submittedView').style.display = 'block';
+  const eb = document.getElementById('editBtn');
+  if (eb) eb.style.display = '';
+}
+
+// ── Submit ────────────────────────────────────────────────────
+function submitRating(bookId) {
+  if (!sel) { showMsg('Please select a star rating.', true); return; }
+  const review = ta ? ta.value.trim() : '';
+  const btn = document.querySelector('#editView .btn-terra');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+
+  fetch('/api/rate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+    body: JSON.stringify({ book_id: bookId, rating: sel, review })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('Server error ' + r.status);
+    return r.json();
+  })
+  .then(d => {
+    if (d.status !== 'ok') throw new Error(d.message || 'Unknown error');
+
+    // Update submitted view
+    const stars = '★'.repeat(sel) + '☆'.repeat(5 - sel);
+    const ds = document.getElementById('displayStars');
+    const dl = document.getElementById('displayLabel');
+    const dr = document.getElementById('displayReview');
+    if (ds) ds.textContent = stars;
+    if (dl) dl.textContent = LABELS[sel];
+    if (dr) {
+      dr.textContent = review || 'No review added yet.';
+      dr.style.fontStyle = review ? 'italic' : 'normal';
+      dr.style.color = review ? '' : 'var(--text-300)';
+    }
+
+    // Update pinned review card
+    const mc = document.getElementById('myCardStars');
+    const mt = document.getElementById('myCardText');
+    if (mc) mc.textContent = stars;
+    if (mt) {
+      mt.textContent = review || 'No written review yet — add one by clicking Edit.';
+      mt.className   = review ? 'my-review-text' : 'my-review-no-text';
+    }
+
+    cancelEdit();
+    showMsg('✓ Saved successfully!', false);
+    setTimeout(() => { const m=document.getElementById('rateMsg'); if(m)m.style.display='none'; }, 3000);
+  })
+  .catch(err => {
+    console.error(err);
+    showMsg('Failed to save — ' + err.message, true);
+  })
+  .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Save'; } });
+}
+
+function showMsg(text, isErr) {
+  const m = document.getElementById('rateMsg');
+  if (!m) return;
+  m.textContent = text;
+  m.className   = 'rate-msg ' + (isErr ? 'err' : 'ok');
+  m.style.display = 'flex';
+}
+
+// ── Wishlist ──────────────────────────────────────────────────
+function toggleWish(bookId) {
+  {% if not current_user.is_authenticated %}window.location='{{ url_for("auth.login") }}';return;{% endif %}
+  fetch('/api/wishlist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+    body: JSON.stringify({ book_id: bookId })
+  })
+  .then(r => { if (!r.ok) throw new Error('Server error'); return r.json(); })
+  .then(d => {
+    const btn = document.getElementById('wishBtn');
+    const added = d.status === 'added';
+    btn.innerHTML = '<i class="fa-' + (added?'solid':'regular') + ' fa-bookmark"></i> ' + (added?'Saved to Wishlist':'Want to Read');
+    btn.className = 'btn-hero-primary' + (added?' saved':'');
+  })
+  .catch(() => {});
+}
+</script>
+{% endblock %}

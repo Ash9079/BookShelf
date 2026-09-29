@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Admin{% endblock %} — BookShelf Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --white:#ffffff;--bg:#f1f5f9;--card:#ffffff;
+      --blue:#3b82f6;--blue-light:#eff6ff;--blue-dark:#1d4ed8;
+      --text:#1e293b;--text-2:#64748b;--text-3:#94a3b8;
+      --border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.08);
+      --sidebar:240px;--topbar:56px;
+      --radius:8px;--radius-lg:12px;
+    }
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+    a{color:var(--blue);text-decoration:none}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:50}
+    .sidebar-logo{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1rem;color:var(--text)}
+    .sidebar-logo i{color:var(--blue)}
+    .sidebar-logo span{font-size:.7rem;font-weight:500;color:var(--text-3);margin-top:1px}
+    .sidebar-nav{flex:1;padding:.5rem 0;overflow-y:auto}
+    .sidebar-section{padding:.5rem 1rem .25rem;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+    .sidebar-link{display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;color:var(--text-2);font-size:.875rem;font-weight:500;border-left:3px solid transparent;transition:all .15s}
+    .sidebar-link:hover{background:var(--blue-light);color:var(--blue)}
+    .sidebar-link.active{background:var(--blue-light);color:var(--blue);border-left-color:var(--blue)}
+    .sidebar-link i{width:16px;text-align:center}
+    .sidebar-badge{margin-left:auto;background:var(--blue);color:#fff;border-radius:10px;padding:.1rem .45rem;font-size:.7rem;font-family:'JetBrains Mono',monospace}
+    .sidebar-footer{padding:1rem;border-top:1px solid var(--border)}
+    .sidebar-user{display:flex;align-items:center;gap:.6rem}
+    .sidebar-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+    .sidebar-user-info .name{font-size:.8rem;font-weight:600}
+    .sidebar-user-info .role{font-size:.7rem;color:var(--text-3)}
+
+    /* Topbar */
+    .topbar{position:fixed;top:0;left:var(--sidebar);right:0;height:var(--topbar);background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.5rem;gap:1rem;z-index:40}
+    .topbar-back{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--text-2);padding:.35rem .7rem;border:1px solid var(--border);border-radius:var(--radius);transition:all .15s}
+    .topbar-back:hover{border-color:var(--blue);color:var(--blue)}
+    .breadcrumb{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text-3)}
+    .breadcrumb-sep{opacity:.4}
+    .breadcrumb-current{color:var(--text-2);font-weight:500}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:.75rem}
+    .topbar-stat{font-size:.8rem;color:var(--text-3);display:flex;align-items:center;gap:.35rem}
+    .topbar-stat strong{color:var(--text);font-family:'JetBrains Mono',monospace}
+
+    /* Main area */
+    .admin-main{margin-left:var(--sidebar);padding-top:var(--topbar);flex:1;min-height:100vh}
+    .admin-content{padding:1.5rem}
+
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+    .card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:.9rem;font-weight:600;color:var(--text)}
+    .card-body{padding:1.25rem}
+
+    /* Stats grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow)}
+    .stat-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+    .stat-icon{width:38px;height:38px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1rem}
+    .stat-icon-blue{background:#eff6ff;color:var(--blue)}
+    .stat-icon-green{background:#f0fdf4;color:#16a34a}
+    .stat-icon-amber{background:#fffbeb;color:#d97706}
+    .stat-icon-purple{background:#faf5ff;color:#7c3aed}
+    .stat-num{font-size:1.75rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text)}
+    .stat-label{font-size:.78rem;color:var(--text-2);margin-top:.15rem}
+
+    /* Table */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th{padding:.6rem 1rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:#f8fafc;text-align:left;border-bottom:1px solid var(--border)}
+    td{padding:.7rem 1rem;font-size:.85rem;border-bottom:1px solid var(--border);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f8fafc}
+
+    /* Badges */
+    .badge{display:inline-flex;align-items:center;padding:.2rem .55rem;border-radius:20px;font-size:.72rem;font-weight:600}
+    .badge-green{background:#dcfce7;color:#16a34a}
+    .badge-red{background:#fee2e2;color:#dc2626}
+    .badge-blue{background:#dbeafe;color:#1d4ed8}
+    .badge-amber{background:#fef3c7;color:#d97706}
+    .badge-purple{background:#ede9fe;color:#7c3aed}
+    .badge-gray{background:#f1f5f9;color:#64748b}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:.35rem;padding:.45rem .9rem;border-radius:var(--radius);font-size:.8rem;font-weight:500;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .15s}
+    .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dark)}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-2)}.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+    .btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}
+    .btn-sm{padding:.3rem .65rem;font-size:.75rem}
+    .btn-success{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}.btn-success:hover{background:#bbf7d0}
+
+    /* Form */
+    .form-group{margin-bottom:1rem}
+    .form-label{display:block;font-size:.8rem;font-weight:500;color:var(--text-2);margin-bottom:.35rem}
+    .form-input{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:var(--radius);font-size:.875rem;font-family:'Inter',sans-serif;color:var(--text);transition:border-color .15s}
+    .form-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    textarea.form-input{resize:vertical;min-height:80px}
+    select.form-input{cursor:pointer}
+
+    /* Search bar */
+    .search-row{display:flex;gap:.5rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
+    .search-input{padding:.45rem .75rem;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:'Inter',sans-serif;color:var(--text);min-width:220px}
+    .search-input:focus{outline:none;border-color:var(--blue)}
+
+    /* Pagination */
+    .pagination{display:flex;gap:.3rem;align-items:center;margin-top:1rem;flex-wrap:wrap}
+    .page-btn{padding:.3rem .65rem;border:1px solid var(--border);border-radius:var(--radius);font-size:.78rem;color:var(--text-2);transition:all .15s}
+    .page-btn:hover{border-color:var(--blue);color:var(--blue)}
+    .page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .page-btn.disabled{opacity:.35;pointer-events:none}
+
+    /* Flash */
+    .a-flash{padding:.6rem 1rem;border-radius:var(--radius);margin-bottom:1rem;font-size:.85rem;display:flex;align-items:center;gap:.6rem}
+    .a-flash-success{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}
+    .a-flash-danger{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+    .a-flash-info{background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe}
+
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+    @media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
+  </style>
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <i class="fa-solid fa-book-open"></i>
+    <div><div>BookShelf</div><span>Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Overview</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+      <i class="fa-solid fa-gauge"></i> Dashboard
+    </a>
+
+    <div class="sidebar-section">Library</div>
+    <a href="{{ url_for('admin.books') }}" class="sidebar-link {% if 'admin.books' in request.endpoint or 'admin.edit_book' in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-book"></i> Books
+      <span class="sidebar-badge">{{ admin_book_count }}</span>
+    </a>
+    <a href="{{ url_for('admin.genres') }}" class="sidebar-link {% if request.endpoint == 'admin.genres' %}active{% endif %}">
+      <i class="fa-solid fa-tags"></i> Genres
+    </a>
+    <a href="{{ url_for('admin.ratings') }}" class="sidebar-link {% if request.endpoint == 'admin.ratings' %}active{% endif %}">
+      <i class="fa-solid fa-star"></i> Ratings
+    </a>
+
+    <div class="sidebar-section">Users</div>
+    <a href="{{ url_for('admin.users') }}" class="sidebar-link {% if 'admin.users' in request.endpoint or 'admin.user_detail' in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-users"></i> Users
+      <span class="sidebar-badge">{{ admin_user_count }}</span>
+    </a>
+
+    <div class="sidebar-section">Tools</div>
+    <a href="{{ url_for('admin.import_csv') }}" class="sidebar-link {% if request.endpoint == 'admin.import_csv' %}active{% endif %}">
+      <i class="fa-solid fa-file-import"></i> Import CSV
+    </a>
+    <a href="{{ url_for('books.home') }}" class="sidebar-link">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Site
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <img class="sidebar-avatar"
+           src="{{ current_user.avatar_url or 'https://api.dicebear.com/8.x/initials/svg?seed=' ~ current_user.username }}"
+           alt="{{ current_user.username }}">
+      <div class="sidebar-user-info">
+        <div class="name">{{ current_user.username }}</div>
+        <div class="role">{% if current_user.is_super_admin %}Super Admin{% else %}Admin{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Topbar -->
+<header class="topbar">
+  <a href="{{ url_for('books.home') }}" class="topbar-back"><i class="fa-solid fa-arrow-left"></i> Site</a>
+  <div class="breadcrumb">
+    <span>Admin</span><span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">{% block breadcrumb %}Dashboard{% endblock %}</span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stat"><i class="fa-solid fa-book"></i><strong>{{ admin_book_count }}</strong> books</div>
+    <div class="topbar-stat"><i class="fa-solid fa-users"></i><strong>{{ admin_user_count }}</strong> users</div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="admin-main">
+  <div class="admin-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat, msg in messages %}
+    <div class="a-flash a-flash-{{ cat }}"><i class="fa-solid fa-circle-info"></i>{{ msg }}</div>
+    {% endfor %}{% endif %}{% endwith %}
+    {% block admin_content %}{% endblock %}
+  </div>
+</main>
+
+<script>
+function csrf(){const el=document.querySelector('meta[name="csrf-token"]');return el?el.content:'';}
+function ajaxPost(url, data, onSuccess){
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify(data||{})})
+  .then(r=>r.json()).then(d=>{if(d.status==='ok'&&onSuccess)onSuccess(d);else if(d.message)alert(d.message);})
+  .catch(e=>alert('Request failed: '+e));
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

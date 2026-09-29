@@ -1,0 +1,611 @@
+{% extends "base.html" %}
+{% block title %}Browse Books{% endblock %}
+{% block extra_styles %}
+<style>
+/* ── Page shell ─────────────────────────────────────────── */
+.browse-page { display: flex; min-height: calc(100vh - 68px); }
+
+/* ── Sidebar ────────────────────────────────────────────── */
+.filter-sidebar {
+  width: 268px; flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  padding: 1.75rem 1.25rem;
+  position: sticky; top: 68px;
+  height: calc(100vh - 68px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.filter-sidebar::-webkit-scrollbar { width: 4px; }
+.filter-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.sidebar-logo {
+  font-family: var(--font-display); font-size: 1.15rem;
+  font-weight: 700; color: var(--text-900);
+  margin-bottom: 1.5rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: .5rem;
+}
+.sidebar-logo span { color: var(--terra); }
+
+/* Search inside sidebar */
+.sidebar-search {
+  display: flex; gap: 0; margin-bottom: 1.5rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  overflow: hidden; transition: border-color var(--transition);
+}
+.sidebar-search:focus-within { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(194,82,43,.1); }
+.sidebar-search input {
+  flex: 1; padding: .6rem .85rem; border: none; outline: none;
+  font-size: .875rem; font-family: var(--font-body);
+  background: transparent; color: var(--text-900);
+}
+.sidebar-search input::placeholder { color: var(--text-300); }
+.sidebar-search button {
+  padding: .6rem .85rem; background: var(--terra); color: white;
+  border: none; cursor: pointer; transition: background var(--transition);
+  font-size: .85rem;
+}
+.sidebar-search button:hover { background: #A8421D; }
+
+/* Filter sections */
+.filter-section { margin-bottom: 1.5rem; }
+.filter-section-title {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-400);
+  margin-bottom: .75rem; display: flex; align-items: center;
+  justify-content: space-between;
+}
+.filter-clear-link {
+  font-size: .7rem; color: var(--terra); cursor: pointer;
+  font-weight: 600; text-transform: none; letter-spacing: 0;
+}
+.filter-clear-link:hover { text-decoration: underline; }
+
+/* Sort pills */
+.sort-pill-group { display: flex; flex-direction: column; gap: .3rem; }
+.sort-pill {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .75rem; border-radius: var(--radius-md);
+  font-size: .85rem; font-weight: 500; color: var(--text-600);
+  cursor: pointer; transition: all var(--transition); border: none;
+  background: transparent; width: 100%; text-align: left;
+  font-family: var(--font-body);
+}
+.sort-pill i { width: 16px; font-size: .8rem; color: var(--text-400); }
+.sort-pill:hover { background: var(--cream-alt); color: var(--text-900); }
+.sort-pill.active { background: var(--terra-light); color: var(--terra); font-weight: 700; }
+.sort-pill.active i { color: var(--terra); }
+
+/* Genre list */
+.genre-list { display: flex; flex-direction: column; gap: .15rem; max-height: 260px; overflow-y: auto; }
+.genre-list::-webkit-scrollbar { width: 3px; }
+.genre-list::-webkit-scrollbar-thumb { background: var(--border); }
+.genre-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .42rem .6rem; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition);
+  font-size: .85rem; color: var(--text-600); font-weight: 500;
+}
+.genre-item:hover { background: var(--cream-alt); color: var(--text-900); }
+.genre-item.active { background: var(--navy-light); color: var(--navy); font-weight: 700; }
+.genre-item-count { font-size: .72rem; color: var(--text-300); }
+.genre-item.active .genre-item-count { color: var(--navy-mid); }
+
+/* Year inputs */
+.year-row { display: flex; align-items: center; gap: .5rem; }
+.year-input {
+  flex: 1; padding: .5rem .65rem; border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); font-size: .85rem;
+  font-family: var(--font-body); color: var(--text-900);
+  background: var(--white); transition: border-color var(--transition);
+  width: 0;
+}
+.year-input:focus { outline: none; border-color: var(--terra); }
+.year-sep { font-size: .8rem; color: var(--text-400); flex-shrink: 0; }
+
+/* Language */
+.lang-select {
+  width: 100%; padding: .55rem .75rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  font-size: .85rem; font-family: var(--font-body);
+  color: var(--text-900); background: var(--white);
+  cursor: pointer; transition: border-color var(--transition);
+}
+.lang-select:focus { outline: none; border-color: var(--terra); }
+
+/* Active filters bar */
+.active-filters-bar {
+  display: none; gap: .4rem; flex-wrap: wrap;
+  padding: .6rem 0; margin-bottom: .25rem;
+}
+.active-filters-bar.show { display: flex; }
+.filter-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .25rem .65rem; background: var(--navy-light);
+  border: 1px solid rgba(27,45,79,.12); border-radius: var(--radius-full);
+  font-size: .78rem; color: var(--navy); font-weight: 600;
+}
+.filter-chip-x { cursor: pointer; opacity: .6; font-size: .75rem; }
+.filter-chip-x:hover { opacity: 1; }
+
+/* Apply btn */
+.apply-btn {
+  width: 100%; padding: .6rem; background: var(--navy); color: white;
+  border: none; border-radius: var(--radius-md); font-size: .875rem;
+  font-weight: 600; cursor: pointer; transition: all var(--transition);
+  font-family: var(--font-body); margin-top: .25rem;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+}
+.apply-btn:hover { background: var(--navy-mid); }
+.reset-btn {
+  width: 100%; padding: .5rem; background: transparent; color: var(--text-400);
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  font-size: .8rem; cursor: pointer; margin-top: .5rem;
+  font-family: var(--font-body); transition: all var(--transition);
+}
+.reset-btn:hover { border-color: var(--terra); color: var(--terra); }
+
+/* Mobile filter toggle */
+.mobile-filter-bar {
+  display: none; align-items: center; gap: .75rem;
+  padding: .75rem 1.25rem; background: var(--white);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  position: sticky; top: 68px; z-index: 50;
+}
+@media(max-width: 860px) {
+  .mobile-filter-bar { display: flex; }
+  .filter-sidebar { display: none; }
+  .filter-sidebar.mobile-open {
+    display: block; position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 200; width: 300px; box-shadow: var(--shadow-lg);
+  }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+    z-index: 199;
+  }
+  .sidebar-overlay.show { display: block; }
+}
+
+/* ── Main content ────────────────────────────────────────── */
+.browse-main { flex: 1; min-width: 0; padding: 1.75rem 1.5rem; }
+
+/* Topbar */
+.results-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem; flex-wrap: wrap; gap: .75rem;
+}
+.results-info {
+  font-size: .88rem; color: var(--text-400); font-weight: 500;
+}
+.results-info strong { color: var(--text-900); }
+.view-toggle { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.view-btn {
+  padding: .42rem .7rem; background: transparent; border: none;
+  color: var(--text-400); cursor: pointer; transition: all var(--transition);
+  font-size: .85rem; display: flex; align-items: center;
+}
+.view-btn:hover { background: var(--cream-alt); color: var(--text-900); }
+.view-btn.active { background: var(--navy); color: white; }
+
+/* ── Grid view ───────────────────────────────────────────── */
+.books-grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 1.25rem;
+}
+.grid-book-card {
+  background: var(--white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); overflow: hidden;
+  cursor: pointer; transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+  animation: fadeUp .35s var(--ease) both;
+}
+.grid-book-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(26,22,20,.13), 0 0 0 1px var(--border); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.grid-book-card:nth-child(2) { animation-delay:.04s; }
+.grid-book-card:nth-child(3) { animation-delay:.08s; }
+.grid-book-card:nth-child(4) { animation-delay:.12s; }
+.grid-book-card:nth-child(5) { animation-delay:.16s; }
+.grid-book-card:nth-child(n+6) { animation-delay:.2s; }
+.grid-cover-wrap { position: relative; overflow: hidden; }
+.grid-cover {
+  width: 100%; aspect-ratio: 2/3; object-fit: cover;
+  background: var(--cream-alt); transition: transform .35s var(--ease);
+}
+.grid-book-card:hover .grid-cover { transform: scale(1.05); }
+.grid-badge {
+  position: absolute; top: .55rem; right: .55rem;
+  background: rgba(255,255,255,.93); border-radius: var(--radius-full);
+  padding: .18rem .55rem; font-size: .73rem; font-weight: 700;
+  color: var(--amber); display: flex; align-items: center; gap: .25rem;
+  backdrop-filter: blur(8px); box-shadow: var(--shadow-sm);
+}
+.grid-wishlist-btn {
+  position: absolute; top: .55rem; left: .55rem;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,.93); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; color: var(--text-400);
+  opacity: 0; transform: scale(.8);
+  transition: all .2s var(--ease);
+  backdrop-filter: blur(8px); box-shadow: var(--shadow-sm);
+}
+.grid-book-card:hover .grid-wishlist-btn { opacity: 1; transform: scale(1); }
+.grid-wishlist-btn.wishlisted { opacity: 1; transform: scale(1); color: var(--terra); background: var(--terra-light); }
+.grid-wishlist-btn:hover { color: var(--terra); }
+.grid-info { padding: .85rem .8rem .8rem; }
+.grid-title {
+  font-family: var(--font-display); font-size: .9rem; font-weight: 600;
+  color: var(--text-900); line-height: 1.35; margin-bottom: .2rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.grid-author { font-size: .76rem; color: var(--text-400); margin-bottom: .5rem; }
+.grid-genre { font-size: .72rem; color: var(--terra); font-weight: 600; }
+
+/* ── List view ───────────────────────────────────────────── */
+.books-list-view { display: flex; flex-direction: column; gap: .7rem; }
+.list-book-card {
+  background: var(--white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); overflow: hidden;
+  cursor: pointer; transition: box-shadow .2s var(--ease), transform .2s var(--ease);
+  display: flex; animation: fadeUp .3s var(--ease) both;
+}
+.list-book-card:hover { box-shadow: var(--shadow-md); transform: translateX(3px); }
+.list-cover-wrap { width: 72px; flex-shrink: 0; position: relative; overflow: hidden; }
+.list-cover { width: 72px; height: 108px; object-fit: cover; background: var(--cream-alt); }
+.list-body { flex: 1; padding: .85rem 1.1rem; display: flex; align-items: flex-start; gap: 1rem; min-width: 0; }
+.list-body-main { flex: 1; min-width: 0; }
+.list-title {
+  font-family: var(--font-display); font-size: 1rem; font-weight: 700;
+  color: var(--text-900); line-height: 1.3; margin-bottom: .2rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.list-author { font-size: .83rem; color: var(--text-400); margin-bottom: .5rem; }
+.list-meta { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.list-rating { display: flex; align-items: center; gap: .3rem; font-size: .82rem; font-weight: 700; color: var(--amber); }
+.list-rating-count { font-size: .78rem; color: var(--text-400); font-weight: 400; }
+.list-genre { font-size: .76rem; color: var(--terra); font-weight: 600; padding: .18rem .55rem; background: var(--terra-light); border-radius: var(--radius-full); }
+.list-desc {
+  font-size: .82rem; color: var(--text-400); line-height: 1.55; margin-top: .4rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.list-actions { display: flex; flex-direction: column; gap: .4rem; align-items: flex-end; flex-shrink: 0; }
+.list-wish-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: transparent;
+  color: var(--text-400); cursor: pointer; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.list-wish-btn:hover, .list-wish-btn.wishlisted { border-color: var(--terra); color: var(--terra); background: var(--terra-light); }
+
+/* ── Empty & Pagination ──────────────────────────────────── */
+.empty-browse {
+  text-align: center; padding: 5rem 1rem;
+  background: var(--white); border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--border);
+}
+.empty-browse i { font-size: 3rem; color: var(--text-300); margin-bottom: 1rem; display: block; }
+.empty-browse h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: .4rem; color: var(--text-600); }
+.empty-browse p { font-size: .9rem; color: var(--text-400); margin-bottom: 1.25rem; }
+
+.browse-pagination {
+  display: flex; align-items: center; gap: .4rem;
+  justify-content: center; margin-top: 2rem; flex-wrap: wrap;
+}
+.pg-btn {
+  min-width: 38px; height: 38px; padding: 0 .75rem;
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  font-size: .85rem; font-weight: 600; color: var(--text-600);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); background: var(--white);
+}
+.pg-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--navy-light); }
+.pg-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+.pg-btn.disabled { opacity: .35; pointer-events: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Mobile filter toggle bar -->
+<div class="mobile-filter-bar">
+  <button class="btn btn-ghost btn-sm" onclick="openSidebar()">
+    <i class="fa-solid fa-sliders"></i> Filters
+  </button>
+  <div style="flex:1;display:flex;">
+    <div class="sidebar-search" style="width:100%;max-width:340px">
+      <input type="text" id="mobileSearchQ" value="{{ q }}" placeholder="Search title or author…" onkeydown="if(event.key==='Enter')goFilter()">
+      <button onclick="goFilter()"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+  </div>
+  {% set has_filters = q or selected_genre or selected_lang or year_from or year_to %}
+  {% if has_filters %}
+  <a href="{{ url_for('books.browse') }}" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> Clear</a>
+  {% endif %}
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="browse-page">
+
+  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <aside class="filter-sidebar" id="filterSidebar">
+    <div class="sidebar-logo"><i class="fa-solid fa-compass" style="color:var(--terra)"></i> Find Your <span>Next Read</span></div>
+
+    <!-- Search -->
+    <div class="filter-section">
+      <div class="filter-section-title">Search</div>
+      <div class="sidebar-search">
+        <input type="text" id="searchQ" value="{{ q }}" placeholder="Title or author…" onkeydown="if(event.key==='Enter')goFilter()">
+        <button onclick="goFilter()"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+    </div>
+
+    <!-- Sort -->
+    <div class="filter-section">
+      <div class="filter-section-title">Sort By</div>
+      <div class="sort-pill-group">
+        {% for key, icon, label in [('popular','fa-fire','Popular'),('top_rated','fa-star','Top Rated'),('newest','fa-sparkles','Newest First'),('az','fa-arrow-down-a-z','A → Z')] %}
+        <button class="sort-pill {% if sort == key %}active{% endif %}" onclick="setSort('{{ key }}')">
+          <i class="fa-solid {{ icon }}"></i> {{ label }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Genre -->
+    <div class="filter-section">
+      <div class="filter-section-title">
+        Genre
+        {% if selected_genre %}<span class="filter-clear-link" onclick="removeParam('genre')">Clear</span>{% endif %}
+      </div>
+      <div class="genre-list">
+        {% for g in genres %}
+        <div class="genre-item {% if selected_genre == g.id %}active{% endif %}" onclick="setGenre({{ g.id }})">
+          {{ g.name }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="filter-section">
+      <div class="filter-section-title">Language</div>
+      <select class="lang-select" id="filterLang" onchange="goFilter()">
+        <option value="">All Languages</option>
+        {% for lc in languages %}
+        <option value="{{ lc }}" {% if selected_lang == lc %}selected{% endif %}>{{ lc }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Year -->
+    <div class="filter-section">
+      <div class="filter-section-title">
+        Publication Year
+        {% if year_from or year_to %}<span class="filter-clear-link" onclick="clearYears()">Clear</span>{% endif %}
+      </div>
+      <div class="year-row">
+        <input type="number" class="year-input" id="filterYearFrom" placeholder="From" value="{{ year_from or '' }}" onblur="goFilter()">
+        <span class="year-sep">–</span>
+        <input type="number" class="year-input" id="filterYearTo" placeholder="To" value="{{ year_to or '' }}" onblur="goFilter()">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    {% set has_any = q or selected_genre or selected_lang or year_from or year_to %}
+    {% if has_any %}
+    <a href="{{ url_for('books.browse') }}" class="reset-btn" style="display:flex;align-items:center;justify-content:center;gap:.4rem;text-decoration:none">
+      <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+    </a>
+    {% endif %}
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────── -->
+  <main class="browse-main">
+
+    <!-- Active filter chips -->
+    <div class="active-filters-bar {% if has_any %}show{% endif %}">
+      {% if q %}<span class="filter-chip">Search: "{{ q }}" <span class="filter-chip-x" onclick="removeParam('q')">✕</span></span>{% endif %}
+      {% if selected_genre %}{% for g in genres %}{% if g.id == selected_genre %}<span class="filter-chip">{{ g.name }} <span class="filter-chip-x" onclick="removeParam('genre')">✕</span></span>{% endif %}{% endfor %}{% endif %}
+      {% if selected_lang %}<span class="filter-chip">{{ selected_lang }} <span class="filter-chip-x" onclick="removeParam('lang')">✕</span></span>{% endif %}
+      {% if year_from %}<span class="filter-chip">From {{ year_from }} <span class="filter-chip-x" onclick="removeParam('year_from')">✕</span></span>{% endif %}
+      {% if year_to %}<span class="filter-chip">Until {{ year_to }} <span class="filter-chip-x" onclick="removeParam('year_to')">✕</span></span>{% endif %}
+    </div>
+
+    <!-- Results topbar -->
+    <div class="results-topbar">
+      <div class="results-info">
+        {% if pagination.total %}
+          <strong>{{ pagination.total }}</strong> book{% if pagination.total != 1 %}s{% endif %}
+          {% if q %} matching "<em>{{ q }}</em>"{% endif %}
+        {% else %}No results found{% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="view-toggle">
+          <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="Grid view">
+            <i class="fa-solid fa-grid-2"></i>
+          </button>
+          <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="List view">
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {% if books %}
+
+    <!-- Grid View -->
+    <div class="books-grid-view" id="gridView">
+      {% for book in books %}
+      <div class="grid-book-card" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+        <div class="grid-cover-wrap">
+          <img class="grid-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" loading="lazy" onerror="this.src='/static/img/no-cover.svg'">
+          <div class="grid-badge"><i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}</div>
+          <button class="grid-wishlist-btn wish-btn {% if book.id in user_wishlist %}wishlisted{% endif %}" data-id="{{ book.id }}" onclick="event.stopPropagation()" title="{% if book.id in user_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+            <i class="fa-{% if book.id in user_wishlist %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+          </button>
+        </div>
+        <div class="grid-info">
+          <div class="grid-title">{{ book.title }}</div>
+          <div class="grid-author">{{ book.author or 'Unknown' }}</div>
+          {% if book.genres %}<div class="grid-genre">{{ book.genres[0].name }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- List View (hidden by default) -->
+    <div class="books-list-view" id="listView" style="display:none">
+      {% for book in books %}
+      <div class="list-book-card" onclick="location.href='{{ url_for('books.detail', book_id=book.id) }}'">
+        <div class="list-cover-wrap">
+          <img class="list-cover" src="{{ book.cover() or '/static/img/no-cover.svg' }}" alt="{{ book.title }}" loading="lazy" onerror="this.src='/static/img/no-cover.svg'">
+        </div>
+        <div class="list-body">
+          <div class="list-body-main">
+            <div class="list-title">{{ book.title }}</div>
+            <div class="list-author">{{ book.author or 'Unknown Author' }}</div>
+            <div class="list-meta">
+              <span class="list-rating">
+                <i class="fa-solid fa-star"></i>{{ '%.1f'|format(book.average_rating) }}
+                <span class="list-rating-count">({{ book.ratings_count or 0 }})</span>
+              </span>
+              {% if book.genres %}<span class="list-genre">{{ book.genres[0].name }}</span>{% endif %}
+              {% if book.page_count %}<span style="font-size:.78rem;color:var(--text-400)">{{ book.page_count | pages_fmt }}</span>{% endif %}
+            </div>
+            {% if book.description %}
+            <div class="list-desc">{{ book.description[:180] }}</div>
+            {% endif %}
+          </div>
+          <div class="list-actions" onclick="event.stopPropagation()">
+            <button class="list-wish-btn wish-btn {% if book.id in user_wishlist %}wishlisted{% endif %}" data-id="{{ book.id }}" title="{% if book.id in user_wishlist %}Remove from wishlist{% else %}Save{% endif %}">
+              <i class="fa-{% if book.id in user_wishlist %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div class="browse-pagination">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('books.browse', page=pagination.page-1, q=q, genre=selected_genre, lang=selected_lang, sort=sort, year_from=year_from, year_to=year_to) }}" class="pg-btn">‹</a>
+      {% else %}<span class="pg-btn disabled">‹</span>{% endif %}
+
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('books.browse', page=p, q=q, genre=selected_genre, lang=selected_lang, sort=sort, year_from=year_from, year_to=year_to) }}"
+           class="pg-btn {% if p == pagination.page %}active{% endif %}">{{ p }}</a>
+        {% else %}<span class="pg-btn disabled">…</span>{% endif %}
+      {% endfor %}
+
+      {% if pagination.has_next %}
+      <a href="{{ url_for('books.browse', page=pagination.page+1, q=q, genre=selected_genre, lang=selected_lang, sort=sort, year_from=year_from, year_to=year_to) }}" class="pg-btn">›</a>
+      {% else %}<span class="pg-btn disabled">›</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-browse">
+      <i class="fa-regular fa-face-sad-tear"></i>
+      <h3>No books found</h3>
+      <p>Try adjusting your filters or search for something else.</p>
+      <a href="{{ url_for('books.browse') }}" class="btn btn-primary">
+        <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+      </a>
+    </div>
+    {% endif %}
+
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── URL helpers ─────────────────────────────────────── */
+function buildParams(overrides={}) {
+  const p = new URLSearchParams();
+  const q = (document.getElementById('searchQ') || document.getElementById('mobileSearchQ'))?.value.trim() || '';
+  const g = currentGenre;
+  const l = document.getElementById('filterLang')?.value || '';
+  const yf = document.getElementById('filterYearFrom')?.value || '';
+  const yt = document.getElementById('filterYearTo')?.value || '';
+  if (q) p.set('q', q);
+  if (g) p.set('genre', g);
+  if (l) p.set('lang', l);
+  if (yf) p.set('year_from', yf);
+  if (yt) p.set('year_to', yt);
+  p.set('sort', currentSort);
+  Object.entries(overrides).forEach(([k,v]) => v ? p.set(k,v) : p.delete(k));
+  return p;
+}
+
+let currentSort = '{{ sort }}';
+let currentGenre = {{ selected_genre or 'null' }};
+
+function goFilter() { window.location = '/books?' + buildParams(); }
+function setSort(s) { currentSort = s; goFilter(); }
+function setGenre(id) { currentGenre = (currentGenre === id ? null : id); goFilter(); }
+function removeParam(k) {
+  const p = new URLSearchParams(window.location.search);
+  p.delete(k); p.delete('page');
+  window.location = '/books?' + p.toString();
+}
+function clearYears() {
+  document.getElementById('filterYearFrom').value = '';
+  document.getElementById('filterYearTo').value = '';
+  goFilter();
+}
+
+/* ── View toggle ─────────────────────────────────────── */
+function setView(v) {
+  const isGrid = v === 'grid';
+  document.getElementById('gridView').style.display = isGrid ? '' : 'none';
+  document.getElementById('listView').style.display = isGrid ? 'none' : '';
+  document.getElementById('gridViewBtn').classList.toggle('active', isGrid);
+  document.getElementById('listViewBtn').classList.toggle('active', !isGrid);
+  localStorage.setItem('browseView', v);
+}
+// Restore saved view
+const savedView = localStorage.getItem('browseView');
+if (savedView === 'list') setView('list');
+
+/* ── Mobile sidebar ──────────────────────────────────── */
+function openSidebar() {
+  document.getElementById('filterSidebar').classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.getElementById('filterSidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+/* ── Wishlist ────────────────────────────────────────── */
+document.querySelectorAll('.wish-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    {% if not current_user.is_authenticated %}
+    window.location = '{{ url_for("auth.login") }}'; return;
+    {% endif %}
+    const id = this.dataset.id;
+    fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+      body: JSON.stringify({ book_id: parseInt(id) })
+    }).then(r => r.json()).then(d => {
+      const added = d.status === 'added';
+      // Update all buttons for this book (grid + list may both exist)
+      document.querySelectorAll(`.wish-btn[data-id="${id}"]`).forEach(b => {
+        b.classList.toggle('wishlisted', added);
+        b.querySelector('i').className = `fa-${added ? 'solid' : 'regular'} fa-bookmark`;
+      });
+    });
+  });
+});
+</script>
+{% endblock %}
